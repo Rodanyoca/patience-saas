@@ -1,0 +1,81 @@
+import 'server-only'
+import { eq, sql } from 'drizzle-orm'
+import { db } from '@/lib/db'
+import { agencySettings, auditLogs, counters, currencies } from '@/lib/db/schema'
+import type { CurrentUser } from '@/lib/session'
+
+export type ActionResult = { ok: boolean; error?: string; id?: number | string }
+
+export async function getSettings() {
+  const [row] = await db.select().from(agencySettings).where(eq(agencySettings.id, 1))
+  return row
+}
+
+export async function getRate(code: string) {
+  const [row] = await db.select().from(currencies).where(eq(currencies.code, code))
+  return row ? Number(row.rate) : 1
+}
+
+export async function listCurrencies() {
+  return db.select().from(currencies).orderBy(currencies.code)
+}
+
+type NumberKind = 'dossier' | 'quote' | 'invoice' | 'receipt' | 'client'
+
+/** Atomic, gap-free per-year counter producing references like FAC-2026-0007. */
+export async function nextNumber(kind: NumberKind) {
+  const settings = await getSettings()
+  const year = new Date().getFullYear()
+  const prefix = {
+    dossier: settings.dossierPrefix,
+    quote: settings.quotePrefix,
+    invoice: settings.invoicePrefix,
+    receipt: settings.receiptPrefix,
+    client: settings.clientPrefix,
+  }[kind]
+  const key = kind === 'client' ? 'client' : `${kind}-${year}`
+  const [row] = await db
+    .insert(counters)
+    .values({ key, value: 1 })
+    .onConflictDoUpdate({ target: counters.key, set: { value: sql`${counters.value} + 1` } })
+    .returning({ value: counters.value })
+  const n = String(row.value).padStart(kind === 'client' ? 5 : 4, '0')
+  return kind === 'client' ? `${prefix}-${n}` : `${prefix}-${year}-${n}`
+}
+
+export async function logAudit(
+  user: CurrentUser,
+  action: string,
+  entity: string,
+  entityId?: string | number | null,
+  details?: string,
+) {
+  await db.insert(auditLogs).values({
+    userId: user.id,
+    userName: user.name,
+    action,
+    entity,
+    entityId: entityId != null ? String(entityId) : null,
+    details: details ?? null,
+  })
+}
+
+export function str(fd: FormData, key: string) {
+  const v = fd.get(key)
+  if (typeof v !== 'string') return null
+  const t = v.trim()
+  return t.length ? t : null
+}
+
+export function num(fd: FormData, key: string) {
+  const v = str(fd, key)
+  if (v == null) return 0
+  const n = Number(v.replace(',', '.'))
+  return Number.isFinite(n) ? n : NaN
+}
+
+export function toErr(e: unknown): ActionResult {
+  const message = e instanceof Error ? e.message : 'Une erreur est survenue.'
+  console.error('[action]', e)
+  return { ok: false, error: message }
+}
