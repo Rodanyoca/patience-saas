@@ -1,0 +1,23 @@
+LA PATIENCE — Configuration de production
+
+Site : https://patience-saas.vercel.app
+Projet : yoca-souleymane-s-projects / patience-saas
+Base : Neon, ressource patience-production, plan Free free_v3, région iad1, PostgreSQL 18.7.
+La base locale PostgreSQL 17 reste indépendante.
+
+Les fonctions Vercel sont configurées en iad1 pour rester proches de la base.
+L’authentification intégrée de Neon est désactivée. L’application conserve Better Auth.
+BETTER_AUTH_SECRET et PATIENCE_SETUP_TOKEN sont des secrets distincts, propres à la production. BETTER_AUTH_URL correspond au domaine public. La connexion PostgreSQL est injectée par l’intégration Neon.
+
+Les sept migrations versionnées ont été appliquées à la base neuve. Contrôle : 23 tables applicatives et 231 colonnes, aucun rattachement incohérent. Seules les deux branches, les quatre prestations Travel et la devise USD sont initialisées. Aucun compte ni donnée opérationnelle n’est créé automatiquement.
+
+Premier administrateur
+Ouvrir /sign-in et utiliser la clé privée de production remise séparément au propriétaire. Celui-ci choisit son nom, son email et son mot de passe. Une seconde initialisation est refusée dès qu’un compte existe.
+Après cette première initialisation, retirer PATIENCE_SETUP_TOKEN de l’environnement Vercel Production puis redéployer. Ne pas utiliser la clé de développement local en production.
+
+Maintenance
+Utiliser DATABASE_URL_UNPOOLED pour les migrations et la connexion groupée pour l’application. Toujours vérifier l’identité de la base et définir PATIENCE_MIGRATION_DATABASE=neondb lors de la maintenance.
+La première initialisation d’une base dont le schéma public est vérifié vide enregistre cet état avant de créer les tables. Une base déjà utilisée reste soumise à une sauvegarde pg_dump complète avant toute nouvelle migration. Utiliser des outils PostgreSQL 18 ou plus récents avec cette base PostgreSQL 18 ; PG_BIN permet de choisir leur dossier.
+Ne jamais utiliser delivery:prepare pour vider la production : cette commande est volontairement limitée à la base locale patience_local.
+
+Les fichiers de connexion, les secrets et les clés de remise au propriétaire restent privés et exclus de Git. Les conditions et quotas du plan fournisseur restent ceux de l’offre Free ; aucune montée vers un plan payant n’a été demandée.

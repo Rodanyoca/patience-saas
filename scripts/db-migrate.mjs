@@ -25,6 +25,15 @@ try {
   else pending.push({name,sql,hash})
  }
  if(pending.length && !test){
+  const [{count}]=(await db.query("select count(*)::int as count from information_schema.tables where table_schema='public' and table_type='BASE TABLE'")).rows
+  if(count===0 && !hasLedger){
+   // A verified fresh database has no application data to dump. Record its empty
+   // baseline; existing databases still require a full pg_dump before changes.
+   const folder='.local-backups';fs.mkdirSync(folder,{recursive:true})
+   const target=path.join(folder,'before-empty-initialization-'+Date.now()+'.json')
+   fs.writeFileSync(target,JSON.stringify({database:identity.name,serverVersion:(await db.query('show server_version')).rows[0].server_version,publicTables:0,date:new Date().toISOString()},null,2))
+   console.log('État initial vide vérifié : '+path.basename(target))
+  }else{
   const u=new URL(process.env.DATABASE_URL),folder='.local-backups'
   fs.mkdirSync(folder,{recursive:true})
   const target=path.resolve(folder,'before-catalogue-'+Date.now()+'.dump'),bin=process.env.PG_BIN||(process.platform==='win32'?'C:/Program Files/PostgreSQL/17/bin':'')
@@ -32,6 +41,7 @@ try {
   execFileSync((bin?path.join(bin,process.platform==='win32'?'pg_dump.exe':'pg_dump'):'pg_dump'),['--format=custom','--file',target],{env,stdio:'pipe'})
   execFileSync((bin?path.join(bin,process.platform==='win32'?'pg_restore.exe':'pg_restore'):'pg_restore'),['--list',target],{stdio:'pipe'})
   console.log('Sauvegarde vérifiée : '+path.basename(target))
+  }
  }
  await db.query('CREATE TABLE IF NOT EXISTS app_migrations (name text PRIMARY KEY,hash text NOT NULL,applied_at timestamptz NOT NULL DEFAULT now())')
  for(const m of pending){
