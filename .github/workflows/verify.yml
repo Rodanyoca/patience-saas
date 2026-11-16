@@ -23,11 +23,14 @@ jobs:
    BETTER_AUTH_SECRET: isolated-ci-only-secret-not-for-production-use
   steps:
    - uses: actions/checkout@v4
+   - uses: pnpm/action-setup@v4
+     with:
+      run_install: false
    - uses: actions/setup-node@v4
      with:
       node-version: 22
-      cache: npm
-   - run: npm ci
-   - run: npm run test:catalogue
-   - run: npm run build
-   - run: npm run typecheck
+      cache: pnpm
+   - run: pnpm install --frozen-lockfile
+   - run: pnpm run test:catalogue
+   - run: pnpm run build
+   - run: pnpm run typecheck

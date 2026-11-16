@@ -6,3 +6,8 @@ minimumReleaseAgeExclude:
   - '@playwright/test@1.65.1'
   - playwright-core@1.65.1
   - playwright@1.65.1
+
+# Required by the pinned esbuild versions used by the build tools.
+# Other dependency build scripts still require an explicit decision.
+allowBuilds:
+  esbuild: true
