@@ -1,3 +1,5 @@
+import { Pagination } from '@/components/pagination'
+import { pageNumber, PAGE_SIZE } from '@/lib/pagination'
 import type { Metadata } from 'next'
 import { and, desc, eq, ilike, or, type SQL } from 'drizzle-orm'
 import { db } from '@/lib/db'
@@ -25,9 +27,10 @@ const ENTITIES: Record<string, string> = {
   rapport: 'Exports',
 }
 
-export default async function JournalPage({ searchParams }: { searchParams: Promise<{ q?: string; user?: string; entity?: string }> }) {
+export default async function JournalPage({ searchParams }: { searchParams: Promise<{ page?:string; q?: string; user?: string; entity?: string }> }) {
   await requirePageUser(MANAGERS)
   const sp = await searchParams
+  const page=pageNumber(sp.page)
   const filters: SQL[] = []
   if (sp.user) filters.push(eq(auditLogs.userId, sp.user))
   if (sp.entity) filters.push(eq(auditLogs.entity, sp.entity))
@@ -35,18 +38,20 @@ export default async function JournalPage({ searchParams }: { searchParams: Prom
     const like = `%${sp.q.trim()}%`
     filters.push(or(ilike(auditLogs.action, like), ilike(auditLogs.details, like))!)
   }
-  const [rows, staff] = await Promise.all([
+  const [pageRows, staff] = await Promise.all([
     db
       .select()
       .from(auditLogs)
       .where(filters.length ? and(...filters) : undefined)
       .orderBy(desc(auditLogs.createdAt))
-      .limit(300),
+      .limit(PAGE_SIZE+1).offset((page-1)*PAGE_SIZE),
     listStaff(),
   ])
+  const rows=pageRows.slice(0,PAGE_SIZE)
+
   return (
     <>
-      <PageHeader title="Journal d’activité" description="Traçabilité des opérations importantes effectuées par les utilisateurs (300 dernières)." />
+      <PageHeader title="Journal d’activité" description="Traçabilité des opérations importantes effectuées par les utilisateurs." />
       <SearchForm placeholder="Action, détail…" defaultValue={sp.q}>
         <FilterSelect name="user" defaultValue={sp.user} options={Object.fromEntries(staff.map((s) => [s.id, s.name]))} allLabel="Tous les utilisateurs" />
         <FilterSelect name="entity" defaultValue={sp.entity} options={ENTITIES} allLabel="Tous les modules" />
@@ -82,6 +87,7 @@ export default async function JournalPage({ searchParams }: { searchParams: Prom
           </div>
         )}
       </Panel>
+      <Pagination path="/journal" params={sp} page={page} hasNext={pageRows.length>PAGE_SIZE}/>
     </>
   )
 }

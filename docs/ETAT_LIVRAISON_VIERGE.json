@@ -1,0 +1,52 @@
+{
+  "date": "2026-11-16T09:45:07.993Z",
+  "database": "patience_local",
+  "backup": "before-client-delivery-1794822307221.dump",
+  "before": {
+    "generated_documents": 0,
+    "payments": 1,
+    "doc_lines": 5,
+    "commercial_docs": 4,
+    "services": 2,
+    "dossier_steps": 9,
+    "dossiers": 1,
+    "clients": 1,
+    "supplier_payments": 0,
+    "suppliers": 1,
+    "expenses": 0,
+    "cash_movements": 0,
+    "audit_logs": 11,
+    "counters": 5,
+    "session": 0,
+    "account": 1,
+    "verification": 0,
+    "branch_memberships": 1,
+    "user": 1
+  },
+  "after": {
+    "generated_documents": 0,
+    "payments": 0,
+    "doc_lines": 0,
+    "commercial_docs": 0,
+    "services": 0,
+    "dossier_steps": 0,
+    "dossiers": 0,
+    "clients": 0,
+    "supplier_payments": 0,
+    "suppliers": 0,
+    "expenses": 0,
+    "cash_movements": 0,
+    "audit_logs": 0,
+    "counters": 0,
+    "session": 0,
+    "account": 0,
+    "verification": 0,
+    "branch_memberships": 0,
+    "user": 0
+  },
+  "references": {
+    "branches": 2,
+    "travelPrestationTypes": 4
+  },
+  "accounts": 0
+}

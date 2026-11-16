@@ -1,3 +1,5 @@
+import { notCancelled } from '@/lib/service-sql'
+import { branchScope } from '@/lib/branches'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { sql } from 'drizzle-orm'
@@ -40,35 +42,35 @@ export default async function DashboardPage({
       select
         (select count(*)::int from clients) as clients,
         (select count(*)::int from clients where created_at::date between ${period.from} and ${period.to}) as new_clients,
-        (select count(*)::int from dossiers where status = 'en_attente') as en_attente,
-        (select count(*)::int from dossiers where status = 'en_cours') as en_cours,
-        (select count(*)::int from dossiers where status = 'termine') as termine,
-        (select count(*)::int from dossiers where status = 'annule') as annule,
-        (select count(*)::int from dossiers where created_at::date between ${period.from} and ${period.to}) as new_dossiers
+        (select count(*)::int from dossiers where ${branchScope(sql`dossiers.branch_id`,user)} and status = 'en_attente') as en_attente,
+        (select count(*)::int from dossiers where ${branchScope(sql`dossiers.branch_id`,user)} and status = 'en_cours') as en_cours,
+        (select count(*)::int from dossiers where ${branchScope(sql`dossiers.branch_id`,user)} and status = 'termine') as termine,
+        (select count(*)::int from dossiers where ${branchScope(sql`dossiers.branch_id`,user)} and status = 'annule') as annule,
+        (select count(*)::int from dossiers where ${branchScope(sql`dossiers.branch_id`,user)} and created_at::date between ${period.from} and ${period.to}) as new_dossiers
     `),
     db.execute(sql`
-      select type, count(distinct dossier_id)::int as count from services
-      where created_at::date between ${period.from} and ${period.to} group by type order by count desc
+      select coalesce(p.id,s.type) as type,coalesce(p.name,s.type) as name,count(distinct s.dossier_id)::int as count from services s left join prestation_types p on p.id=s.prestation_type_id
+      where ${branchScope(sql`s.branch_id`,user)} and ${notCancelled(sql`s.status`)} and s.created_at::date between ${period.from} and ${period.to} group by p.id,p.name,s.type order by count desc
     `),
     db.execute(sql`
       select * from (
         select 'Échéance de traitement' as kind, d.due_date::text as date, d.id as dossier_id, d.reference, d.title,
           c.first_name || ' ' || upper(c.last_name) as client, d.priority, d.status
         from dossiers d join clients c on c.id = d.client_id
-        where d.status in ('en_attente','en_cours') and d.due_date is not null and d.due_date <= current_date + 14
+        where ${branchScope(sql`d.branch_id`,user)} and d.status in ('en_attente','en_cours') and d.due_date is not null and d.due_date <= current_date + 14
         union all
         select 'Départ', d.departure_date::text, d.id, d.reference, d.title, c.first_name || ' ' || upper(c.last_name), d.priority, d.status
         from dossiers d join clients c on c.id = d.client_id
-        where d.status in ('en_attente','en_cours') and d.departure_date between current_date and current_date + 14
+        where ${branchScope(sql`d.branch_id`,user)} and d.status in ('en_attente','en_cours') and d.departure_date between current_date and current_date + 14
         union all
         select 'Rendez-vous consulaire', s.details->>'appointmentDate', d.id, d.reference, s.description, c.first_name || ' ' || upper(c.last_name), d.priority, d.status
         from services s join dossiers d on d.id = s.dossier_id join clients c on c.id = d.client_id
-        where s.type = 'visa' and s.status not in ('accorde','refuse') and coalesce(s.details->>'appointmentDate','') <> ''
+        where ${branchScope(sql`d.branch_id`,user)} and coalesce((select p.form_type from prestation_types p where p.id=s.prestation_type_id),case when s.type='visa' then 'visa' else 'generic' end) = 'visa' and s.status not in ('accorde','refuse','annule','annulee') and coalesce(s.details->>'appointmentDate','') <> ''
           and (s.details->>'appointmentDate')::date between current_date and current_date + 14
         union all
         select 'Dossier urgent', d.updated_at::date::text, d.id, d.reference, d.title, c.first_name || ' ' || upper(c.last_name), d.priority, d.status
         from dossiers d join clients c on c.id = d.client_id
-        where d.status in ('en_attente','en_cours') and d.priority = 'urgente'
+        where ${branchScope(sql`d.branch_id`,user)} and d.status in ('en_attente','en_cours') and d.priority = 'urgente'
       ) x order by case when priority = 'urgente' then 0 else 1 end, date limit 12
     `),
     isManager ? periodSummary(period) : Promise.resolve(null),
@@ -77,7 +79,7 @@ export default async function DashboardPage({
   ])
 
   const c = countsRes.rows[0] as Record<string, number>
-  const byType = typeRes.rows as { type: string; count: number }[]
+  const byType = typeRes.rows as { type: string; name: string; count: number }[]
   const deadlines = deadlinesRes.rows as Deadline[]
   const dueTotal = openInvoices.reduce((a, r) => a + Number(r.total) - Number(r.paid), 0)
   const today = todayISO()
@@ -109,6 +111,7 @@ export default async function DashboardPage({
         </p>
       )}
 
+      <p className="text-xs text-muted-foreground">Ventes et encaissements : branches autorisées. Dépenses et paiements fournisseurs : charges communes de l’entreprise.</p>
       <PeriodForm from={period.from} to={period.to} />
 
       <section aria-label="Dossiers" className="grid grid-cols-2 overflow-hidden rounded-lg border bg-card md:grid-cols-5">
@@ -188,13 +191,13 @@ export default async function DashboardPage({
           ) : (
             <div className="flex flex-col gap-3 p-4">
               <ShareChart
-                data={byType.map((t) => ({ key: t.type, label: SERVICE_TYPES[t.type as ServiceType], value: t.count }))}
+                data={byType.map((t) => ({ key: t.type, label: t.name, value: t.count }))}
               />
               <ul className="flex flex-col gap-1.5 text-sm">
                 {byType.map((t) => (
                   <li key={t.type} className="flex justify-between">
                     <Link href={`/prestations?type=${t.type}`} className="text-muted-foreground hover:text-foreground hover:underline">
-                      {SERVICE_TYPES[t.type as ServiceType]}
+                      {t.name}
                     </Link>
                     <span className="font-mono">{t.count}</span>
                   </li>

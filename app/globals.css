@@ -1,10 +1,15 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
-@import 'shadcn/tailwind.css';
+@import './vendor/shadcn.css';
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --color-brand-blue: var(--brand-blue);
+  --color-brand-blue-deep: var(--brand-blue-deep);
+  --color-brand-gold: var(--brand-gold);
+  --color-brand-burgundy: var(--brand-burgundy);
+  --color-primary-hover: var(--primary-hover);
   --font-sans: var(--font-plex-sans), 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-plex-mono), 'IBM Plex Mono', ui-monospace, monospace;
   --color-sidebar-ring: var(--sidebar-ring);
@@ -47,41 +52,46 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* Palette: passport navy (primary), visa-stamp amber (accent), cool paper neutrals. */
+/* LA PATIENCE: logo blue, gold and burgundy. Gold pairs with dark text. */
 :root {
   color-scheme: light;
-  --background: oklch(0.972 0.006 245);
-  --foreground: oklch(0.22 0.03 258);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.22 0.03 258);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.22 0.03 258);
-  --primary: oklch(0.36 0.09 258);
-  --primary-foreground: oklch(0.985 0.004 245);
-  --secondary: oklch(0.94 0.012 250);
-  --secondary-foreground: oklch(0.28 0.06 258);
-  --muted: oklch(0.945 0.008 250);
-  --muted-foreground: oklch(0.48 0.025 258);
-  --accent: oklch(0.8 0.14 75);
-  --accent-foreground: oklch(0.27 0.05 60);
-  --destructive: oklch(0.55 0.2 27);
-  --border: oklch(0.9 0.012 250);
-  --input: oklch(0.88 0.014 250);
-  --ring: oklch(0.36 0.09 258);
-  --chart-1: oklch(0.36 0.09 258);
-  --chart-2: oklch(0.78 0.14 75);
-  --chart-3: oklch(0.6 0.08 258);
-  --chart-4: oklch(0.88 0.07 80);
-  --chart-5: oklch(0.8 0.04 258);
-  --radius: 0.5rem;
-  --sidebar: oklch(0.25 0.055 258);
-  --sidebar-foreground: oklch(0.9 0.015 250);
-  --sidebar-primary: oklch(0.8 0.14 75);
-  --sidebar-primary-foreground: oklch(0.25 0.05 60);
-  --sidebar-accent: oklch(0.32 0.065 258);
-  --sidebar-accent-foreground: oklch(0.985 0.004 245);
-  --sidebar-border: oklch(0.34 0.05 258);
-  --sidebar-ring: oklch(0.8 0.14 75);
+  --brand-blue: #243c78;
+  --brand-blue-deep: #192d59;
+  --brand-gold: #d2a52e;
+  --brand-burgundy: #902430;
+  --background: #f5f6fa;
+  --foreground: #202d47;
+  --card: #ffffff;
+  --card-foreground: #202d47;
+  --popover: #ffffff;
+  --popover-foreground: #202d47;
+  --primary: var(--brand-blue);
+  --primary-hover: #1b2f63;
+  --primary-foreground: #ffffff;
+  --secondary: #edf1f9;
+  --secondary-foreground: #243c78;
+  --muted: #eef1f6;
+  --muted-foreground: #5b667e;
+  --accent: #fbf3dd;
+  --accent-foreground: #785a13;
+  --destructive: var(--brand-burgundy);
+  --border: #dce1eb;
+  --input: #8190ad;
+  --ring: var(--brand-blue);
+  --chart-1: var(--brand-blue);
+  --chart-2: #9c751b;
+  --chart-3: var(--brand-burgundy);
+  --chart-4: #627cae;
+  --chart-5: #a48657;
+  --radius: 0.625rem;
+  --sidebar: var(--brand-blue-deep);
+  --sidebar-foreground: #edf1fa;
+  --sidebar-primary: #e0bd5d;
+  --sidebar-primary-foreground: #192d59;
+  --sidebar-accent: #2b4271;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #3e527b;
+  --sidebar-ring: #e0bd5d;
 }
 
 @layer base {
@@ -90,6 +100,20 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  ::selection {
+    background: var(--accent);
+    color: var(--primary);
+  }
+  :where(h1, h2, h3) {
+    text-wrap: balance;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      scroll-behavior: auto !important;
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 

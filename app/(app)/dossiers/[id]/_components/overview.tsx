@@ -1,22 +1,19 @@
+import { notCancelled } from '@/lib/service-sql'
 import { asc, desc, eq, sql } from 'drizzle-orm'
-import { Check, Circle, Users } from 'lucide-react'
+import { Check, Circle } from 'lucide-react'
 import { db } from '@/lib/db'
 import {
   clients,
   commercialDocs,
   dossierSteps,
-  dossierTravelers,
   dossiers,
-  files,
   payments,
   services,
-  travelers,
 } from '@/lib/db/schema'
 import type { CurrentUser } from '@/lib/session'
-import { addDossierNote, setDossierTravelers } from '@/app/actions/dossiers'
+import { addDossierNote } from '@/app/actions/dossiers'
 import { Field, FormDialog, InlineForm, TextArea } from '@/components/forms'
 import { DefinitionList, Panel } from '@/components/shared'
-import { TRAVELER_RELATIONS } from '@/lib/constants'
 import { formatDate, formatDateTime, formatMoney } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
@@ -24,24 +21,16 @@ type Dossier = typeof dossiers.$inferSelect
 type Client = typeof clients.$inferSelect
 
 export async function OverviewTab({ dossier: d, client: c }: { dossier: Dossier; client: Client; user: CurrentUser }) {
-  const [linked, allTravelers, steps, [stats]] = await Promise.all([
-    db
-      .select({ t: travelers })
-      .from(dossierTravelers)
-      .innerJoin(travelers, eq(travelers.id, dossierTravelers.travelerId))
-      .where(eq(dossierTravelers.dossierId, d.id))
-      .orderBy(asc(travelers.id)),
-    db.select().from(travelers).where(eq(travelers.clientId, c.id)).orderBy(asc(travelers.id)),
+  const [steps, [stats]] = await Promise.all([
     db.select().from(dossierSteps).where(eq(dossierSteps.dossierId, d.id)).orderBy(desc(dossierSteps.createdAt)),
     db
       .select({
-        services: sql<number>`(select count(*)::int from ${services} where ${services.dossierId} = ${d.id} and ${services.status} <> 'annule')`,
-        pendingServices: sql<number>`(select count(*)::int from ${services} where ${services.dossierId} = ${d.id} and ${services.status} not in ('emis','confirme','souscrit','accorde','refuse','annule'))`,
-        files: sql<number>`(select count(*)::int from ${files} where ${files.dossierId} = ${d.id})`,
+        services: sql<number>`(select count(*)::int from ${services} where ${services.dossierId} = ${d.id} and ${notCancelled(services.status)})`,
+        pendingServices: sql<number>`(select count(*)::int from ${services} where ${services.dossierId} = ${d.id} and ${services.status} not in ('emis','confirme','souscrit','accorde','refuse','annule','annulee','termine'))`,
         invoiced: sql<string>`(select coalesce(sum(${commercialDocs.total} * ${commercialDocs.rate}),0) from ${commercialDocs} where ${commercialDocs.dossierId} = ${d.id} and ${commercialDocs.kind} = 'facture' and ${commercialDocs.status} <> 'annulee')`,
         paid: sql<string>`(select coalesce(sum(${payments.amount} * ${payments.rate}),0) from ${payments} where ${payments.dossierId} = ${d.id})`,
-        sale: sql<string>`(select coalesce(sum(${services.salePrice} * ${services.rate}),0) from ${services} where ${services.dossierId} = ${d.id} and ${services.status} <> 'annule')`,
-        cost: sql<string>`(select coalesce(sum(${services.costPrice} * ${services.rate}),0) from ${services} where ${services.dossierId} = ${d.id} and ${services.status} <> 'annule')`,
+        sale: sql<string>`(select coalesce(sum(${services.salePrice} * ${services.rate}),0) from ${services} where ${services.dossierId} = ${d.id} and ${notCancelled(services.status)})`,
+        cost: sql<string>`(select coalesce(sum(${services.costPrice} * ${services.rate}),0) from ${services} where ${services.dossierId} = ${d.id} and ${notCancelled(services.status)})`,
       })
       .from(sql`(select 1) as x`),
   ])
@@ -49,13 +38,10 @@ export async function OverviewTab({ dossier: d, client: c }: { dossier: Dossier;
   const due = Number(stats.invoiced) - Number(stats.paid)
   const uninvoiced = Number(stats.sale) - Number(stats.invoiced)
   const margin = Number(stats.sale) - Number(stats.cost)
-  const linkedIds = new Set(linked.map((l) => l.t.id))
 
   const checklist = [
-    { ok: linked.length > 0, label: 'Voyageurs identifiés' },
     { ok: stats.services > 0, label: 'Prestations enregistrées' },
     { ok: stats.services > 0 && stats.pendingServices === 0, label: 'Prestations confirmées / émises' },
-    { ok: stats.files > 0, label: 'Documents archivés' },
     { ok: stats.services > 0 && uninvoiced <= 0.01, label: 'Prestations facturées' },
     { ok: Number(stats.invoiced) > 0 && due <= 0.01, label: 'Paiements soldés' },
   ]
@@ -77,62 +63,6 @@ export async function OverviewTab({ dossier: d, client: c }: { dossier: Dossier;
               </div>
             ))}
           </dl>
-        </Panel>
-
-        <Panel
-          title={`Voyageurs (${linked.length})`}
-          actions={
-            <FormDialog
-              title="Voyageurs du dossier"
-              description="Sélectionnez les voyageurs de la fiche client concernés par ce dossier."
-              trigger={
-                <>
-                  <Users /> Gérer
-                </>
-              }
-              triggerVariant="outline"
-              triggerSize="sm"
-              action={setDossierTravelers.bind(null, d.id)}
-              success="Voyageurs mis à jour"
-            >
-              <div className="flex flex-col gap-2">
-                {allTravelers.map((t) => (
-                  <label key={t.id} className="flex items-center gap-3 rounded-md border px-3 py-2 text-sm">
-                    <input
-                      type="checkbox"
-                      name="travelerIds"
-                      value={t.id}
-                      defaultChecked={linkedIds.has(t.id)}
-                      className="size-4 accent-primary"
-                    />
-                    <span className="flex-1">
-                      {t.firstName} {t.lastName.toUpperCase()}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {TRAVELER_RELATIONS[t.relation as keyof typeof TRAVELER_RELATIONS]}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </FormDialog>
-          }
-        >
-          {linked.length === 0 ? (
-            <p className="p-4 text-sm text-muted-foreground">Aucun voyageur rattaché.</p>
-          ) : (
-            <ul className="divide-y">
-              {linked.map(({ t }) => (
-                <li key={t.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2.5 text-sm">
-                  <span className="min-w-40 flex-1 font-medium">
-                    {t.firstName} {t.lastName.toUpperCase()}
-                  </span>
-                  <span className="text-muted-foreground">{formatDate(t.birthDate)}</span>
-                  <span className="font-mono text-xs">{t.passportNumber ?? 'Passeport non renseigné'}</span>
-                  {t.passportExpiry && <span className="text-xs text-muted-foreground">exp. {formatDate(t.passportExpiry)}</span>}
-                </li>
-              ))}
-            </ul>
-          )}
         </Panel>
 
         <Panel title="Informations">

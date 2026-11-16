@@ -14,3 +14,14 @@ __v0_jsx-dev-runtime.ts
 node_modules
 .next/
 .DS_Store
+# Local SQL backups and maintenance reports
+.local-backups/
+drizzle-generated/
+
+# TypeScript incremental cache
+tsconfig.tsbuildinfo
+
+.next-catalogue-test/
+
+# Private delivery credentials
+.local-delivery/

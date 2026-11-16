@@ -146,7 +146,7 @@ async function Summary({ period }: { period: Period }) {
                   const pct = Number(r.sales) > 0 ? (m / Number(r.sales)) * 100 : 0
                   return (
                     <tr key={r.type}>
-                      <td className="px-4 py-2.5">{SERVICE_TYPES[r.type as ServiceType]}</td>
+                      <td className="px-4 py-2.5">{r.name}</td>
                       <td className="px-4 py-2.5 text-right font-mono">{r.count}</td>
                       <td className="px-4 py-2.5 text-right font-mono">{formatMoney(r.sales)}</td>
                       <td className="px-4 py-2.5 text-right font-mono">

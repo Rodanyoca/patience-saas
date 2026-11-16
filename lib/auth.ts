@@ -13,6 +13,7 @@ export const auth = betterAuth({
         : process.env.V0_RUNTIME_URL),
   emailAndPassword: {
     enabled: true,
+    disableSignUp: true,
     autoSignIn: true,
     minPasswordLength: 8,
   },
@@ -82,7 +83,7 @@ export const auth = betterAuth({
     expiresIn: 60 * 60 * 24 * 7,
     updateAge: 60 * 60 * 24,
   },
-  ...(process.env.NODE_ENV === 'development'
+  ...(process.env.NODE_ENV === 'development' && process.env.V0_RUNTIME_URL
     ? {
         advanced: {
           // Required by the cross-site v0 preview iframe. Without these

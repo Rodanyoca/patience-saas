@@ -95,7 +95,7 @@ export function Panel({
   bodyClassName?: string
 }) {
   return (
-    <section className={cn('flex flex-col rounded-lg border bg-card', className)}>
+    <section className={cn('flex flex-col rounded-lg border bg-card shadow-sm shadow-primary/5', className)}>
       {(title || actions) && (
         <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
           {title && <h2 className="text-sm font-semibold">{title}</h2>}
@@ -141,7 +141,7 @@ export function TabLinks({ tabs, active }: { tabs: { key: string; label: string;
           className={cn(
             '-mb-px flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2 text-sm transition-colors',
             t.key === active
-              ? 'border-primary font-medium text-foreground'
+              ? 'border-brand-gold font-semibold text-primary'
               : 'border-transparent text-muted-foreground hover:text-foreground',
           )}
         >

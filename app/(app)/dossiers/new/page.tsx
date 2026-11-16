@@ -1,8 +1,10 @@
+import { allowedBranches } from '@/lib/branches'
+import { SelectField } from '@/components/forms'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { asc, desc, eq, ilike, or, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
-import { clients, travelers } from '@/lib/db/schema'
+import { clients } from '@/lib/db/schema'
 import { requirePageUser } from '@/lib/session'
 import { staffOptions } from '@/lib/queries'
 import { createDossier, } from '@/app/actions/dossiers'
@@ -11,12 +13,12 @@ import { EmptyState, PageHeader, Panel, RefTag, SearchForm } from '@/components/
 import { DossierFields } from '@/components/dossier-fields'
 import { FormDialog, InlineForm } from '@/components/forms'
 import { ClientFields } from '@/components/client-fields'
-import { TRAVELER_RELATIONS } from '@/lib/constants'
 
 export const metadata: Metadata = { title: 'Nouveau dossier' }
 
 export default async function NewDossierPage({ searchParams }: { searchParams: Promise<{ client?: string; q?: string }> }) {
   const me = await requirePageUser()
+  const branchRows = await allowedBranches(me)
   const sp = await searchParams
   const clientId = Number(sp.client)
 
@@ -92,10 +94,7 @@ export default async function NewDossierPage({ searchParams }: { searchParams: P
 
   const [client] = await db.select().from(clients).where(eq(clients.id, clientId))
   if (!client) return <EmptyState title="Client introuvable" />
-  const [travelerRows, staff] = await Promise.all([
-    db.select().from(travelers).where(eq(travelers.clientId, clientId)).orderBy(asc(travelers.id)),
-    staffOptions(),
-  ])
+  const staff = await staffOptions()
 
   return (
     <>
@@ -125,30 +124,9 @@ export default async function NewDossierPage({ searchParams }: { searchParams: P
           redirectTo="/dossiers/{id}?tab=prestations"
         >
           <input type="hidden" name="clientId" value={client.id} />
+          <SelectField label="Branche du dossier" name="branchId" options={branchRows.map(b=>({value:b.id,label:b.name}))} defaultValue={branchRows.length===1?branchRows[0].id:''} placeholder={branchRows.length>1?'Choisissez la branche':undefined} required />
           <DossierFields staff={staff} defaultAgent={me.id} />
-          <fieldset className="flex flex-col gap-2">
-            <legend className="mb-2 text-xs font-medium text-muted-foreground">Voyageurs concernés</legend>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {travelerRows.map((t) => (
-                <label key={t.id} className="flex items-center gap-3 rounded-md border bg-card px-3 py-2 text-sm">
-                  <input type="checkbox" name="travelerIds" value={t.id} defaultChecked className="size-4 accent-primary" />
-                  <span className="flex-1">
-                    {t.firstName} {t.lastName.toUpperCase()}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {TRAVELER_RELATIONS[t.relation as keyof typeof TRAVELER_RELATIONS]}
-                  </span>
-                </label>
-              ))}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              D’autres voyageurs peuvent être ajoutés depuis la{' '}
-              <Link href={`/clients/${client.id}`} className="underline">
-                fiche client
-              </Link>
-              .
-            </p>
-          </fieldset>
+
         </InlineForm>
       </Panel>
     </>

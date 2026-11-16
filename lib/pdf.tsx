@@ -1,3 +1,4 @@
+import { BRAND } from '@/lib/brand'
 import 'server-only'
 import { Document, Page, StyleSheet, Text, View, renderToBuffer } from '@react-pdf/renderer'
 import { formatDate, formatMoney } from '@/lib/format'
@@ -7,13 +8,13 @@ const clean = (s: string) => s.replace(/[\u202f\u00a0]/g, ' ')
 const money = (v: number | string, c: string) => clean(formatMoney(v, c))
 const date = (v: string | Date | null | undefined) => clean(formatDate(v))
 
-const NAVY = '#1f2b4d'
-const AMBER = '#e0a33a'
-const MUTED = '#5b6478'
-const BORDER = '#d9dde6'
+const NAVY = BRAND.blue
+const GOLD = BRAND.gold
+const MUTED = BRAND.muted
+const BORDER = BRAND.border
 
 const s = StyleSheet.create({
-  page: { padding: 40, fontSize: 10, fontFamily: 'Helvetica', color: '#1b2233' },
+  page: { padding: 40, fontSize: 10, fontFamily: 'Helvetica', color: BRAND.text },
   header: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 28 },
   agency: { fontSize: 16, fontFamily: 'Helvetica-Bold', color: NAVY },
   small: { fontSize: 9, color: MUTED, lineHeight: 1.4 },
@@ -30,7 +31,7 @@ const s = StyleSheet.create({
     fontSize: 10,
     letterSpacing: 1,
   },
-  band: { height: 3, backgroundColor: AMBER, marginBottom: 20 },
+  band: { height: 3, backgroundColor: GOLD, marginBottom: 20 },
   row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
   box: { width: '48%', borderWidth: 1, borderColor: BORDER, padding: 10, borderRadius: 3 },
   label: { fontSize: 8, color: MUTED, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
@@ -52,7 +53,7 @@ const s = StyleSheet.create({
     fontFamily: 'Helvetica-Bold',
     fontSize: 12,
   },
-  notes: { marginTop: 24, padding: 10, backgroundColor: '#f2f4f8', fontSize: 9, lineHeight: 1.5 },
+  notes: { marginTop: 24, padding: 10, backgroundColor: BRAND.surface, fontSize: 9, lineHeight: 1.5 },
   footer: { position: 'absolute', bottom: 28, left: 40, right: 40, textAlign: 'center', fontSize: 8, color: MUTED },
 })
 

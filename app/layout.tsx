@@ -17,8 +17,8 @@ const plexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Escale — Gestion d’agence de voyage',
-    template: '%s · Escale',
+    default: 'LA PATIENCE — Espace Travel',
+    template: '%s · LA PATIENCE',
   },
   description:
     'Application interne de gestion : clients, dossiers, visas, billetterie, hôtels, assurances, facturation et finances.',
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#1f2b4d',
+  themeColor: '#243c78',
   width: 'device-width',
   initialScale: 1,
 }

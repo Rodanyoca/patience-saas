@@ -16,7 +16,7 @@ export const metadata: Metadata = { title: 'Administration' }
 const ROLE_HELP: Record<Role, string> = {
   admin: 'Accès complet, gestion des comptes et des paramètres.',
   responsable: 'Toutes les opérations, finances, fournisseurs et journal. Pas de gestion des comptes.',
-  agent: 'Clients, dossiers, prestations, facturation et documents. Pas d’accès aux finances.',
+  agent: 'Clients, dossiers, prestations, facturation. Pas d’accès aux finances.',
 }
 
 export default async function AdminPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
@@ -31,6 +31,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         tabs={[
           { key: 'utilisateurs', label: 'Utilisateurs', href: '/administration' },
           { key: 'agence', label: 'Agence et numérotation', href: '/administration?tab=agence' },
+          { key: 'catalogue', label: 'Référentiel des prestations', href: '/administration/prestations' },
+          { key: 'branches', label: 'Branches', href: '/administration/branches' },
           { key: 'devises', label: 'Devises', href: '/administration?tab=devises' },
         ]}
       />

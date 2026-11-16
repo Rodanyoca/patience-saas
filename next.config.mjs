@@ -1,14 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  distDir: process.env.NEXT_DIST_DIR ?? '.next',
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   images: {
     unoptimized: true,
   },
   serverExternalPackages: ['@react-pdf/renderer', 'exceljs'],
   experimental: {
-    serverActions: { bodySizeLimit: '12mb' },
+    serverActions: { bodySizeLimit: '1mb' },
   },
   async headers() {
     return [

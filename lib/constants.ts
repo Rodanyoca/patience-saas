@@ -16,6 +16,7 @@ export type DossierStatus = keyof typeof DOSSIER_STATUS
 
 export const PRIORITY = { normale: 'Normale', urgente: 'Urgente' } as const
 
+/** Historical tokens/labels only. Selectable offerings come from prestation_types. */
 export const SERVICE_TYPES = {
   visa: 'Assistance visa',
   billet: 'Billetterie aérienne',
@@ -153,25 +154,5 @@ export const EXPENSE_CATEGORIES = {
   marketing: 'Marketing',
   taxes: 'Taxes et impôts',
   banque: 'Frais bancaires',
-  autre: 'Autre',
-} as const
-
-export const FILE_CATEGORIES = {
-  passeport: 'Passeport',
-  identite: "Pièce d'identité",
-  visa: 'Visa',
-  billet: 'Billet',
-  hotel: "Confirmation d'hôtel",
-  assurance: "Attestation d'assurance",
-  justificatif: 'Pièce justificative',
-  autre: 'Autre',
-} as const
-
-export const TRAVELER_RELATIONS = {
-  titulaire: 'Titulaire',
-  conjoint: 'Conjoint(e)',
-  enfant: 'Enfant',
-  parent: 'Parent',
-  collegue: 'Collègue',
   autre: 'Autre',
 } as const

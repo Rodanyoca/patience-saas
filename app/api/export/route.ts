@@ -1,5 +1,7 @@
+import { branchScope } from '@/lib/branches'
 import ExcelJS from 'exceljs'
-import { between, desc, eq, sql } from 'drizzle-orm'
+import { BRAND } from '@/lib/brand'
+import { and, between, desc, eq, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { clients, dossiers, expenses, user as users } from '@/lib/db/schema'
 import { getCurrentUser } from '@/lib/session'
@@ -17,7 +19,7 @@ import { logAudit } from '@/lib/server-utils'
 
 export const runtime = 'nodejs'
 
-const NAVY = 'FF1F2B4D'
+const NAVY = 'FF' + BRAND.blue.slice(1).toUpperCase()
 
 function sheet(wb: ExcelJS.Workbook, name: string, columns: { header: string; key: string; width?: number; money?: boolean }[]) {
   const ws = wb.addWorksheet(name)
@@ -34,7 +36,8 @@ export async function GET(req: Request) {
   if (!user) return new Response('Non autorisé', { status: 401 })
   const url = new URL(req.url)
   const report = url.searchParams.get('report') ?? 'synthese'
-  const period = resolvePeriod({ from: url.searchParams.get('from') ?? undefined, to: url.searchParams.get('to') ?? undefined })
+  let period
+  try { period = resolvePeriod({ from: url.searchParams.get('from') ?? undefined, to: url.searchParams.get('to') ?? undefined }) } catch(e) {return new Response(e instanceof Error?e.message:'Période invalide',{status:400})}
   const financial = ['synthese', 'depenses', 'caisse', 'creances'].includes(report)
   if (financial && user.role === 'agent') return new Response('Accès refusé', { status: 403 })
 
@@ -89,7 +92,7 @@ export async function GET(req: Request) {
     ])
     byType.forEach((r) =>
       t.addRow({
-        type: SERVICE_TYPES[r.type as keyof typeof SERVICE_TYPES],
+        type: r.name,
         count: r.count,
         sales: Number(r.sales),
         cost: Number(r.cost),
@@ -179,8 +182,8 @@ export async function GET(req: Request) {
       .from(dossiers)
       .innerJoin(clients, eq(clients.id, dossiers.clientId))
       .leftJoin(users, eq(users.id, dossiers.agentId))
-      .where(sql`${dossiers.createdAt}::date between ${period.from} and ${period.to}`)
-      .orderBy(desc(dossiers.createdAt))
+      .where(and(sql`${dossiers.createdAt}::date between ${period.from} and ${period.to}`,branchScope(dossiers.branchId,user)))
+      .orderBy(desc(dossiers.createdAt)).limit(10001)
     const ws = sheet(wb, 'Dossiers', [
       { header: 'Référence', key: 'reference', width: 18 },
       { header: 'Ouvert le', key: 'createdAt', width: 12 },
@@ -204,6 +207,7 @@ export async function GET(req: Request) {
     return new Response('Rapport inconnu', { status: 400 })
   }
 
+  if(wb.worksheets.some(sheet=>sheet.rowCount>10001))return new Response('Export trop volumineux. Réduisez la période (10 000 lignes maximum par feuille).',{status:413})
   await logAudit(user, 'Export Excel', 'rapport', null, `${report} ${period.from} → ${period.to}`)
   const buffer = await wb.xlsx.writeBuffer()
   return new Response(new Uint8Array(buffer as ArrayBuffer), {

@@ -179,7 +179,6 @@ function useActionFeedback(result: ActionResult | null, success: string, onSucce
     if (result.ok) {
       toast.success(success)
       onSuccess?.(result)
-      router.refresh()
     } else {
       toast.error(result.error ?? 'Une erreur est survenue.')
     }
@@ -312,7 +311,6 @@ export function ActionButton({
         toast.success(success)
         setOpen(false)
         if (redirectTo) router.push(redirectTo)
-        router.refresh()
       } else toast.error(r.error ?? 'Une erreur est survenue.')
     })
   if (!confirm) {

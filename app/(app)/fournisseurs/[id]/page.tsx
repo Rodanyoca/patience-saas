@@ -1,3 +1,7 @@
+import { and } from 'drizzle-orm'
+import { branchScope } from '@/lib/branches'
+import { serviceNameSql, serviceFormSql } from '@/lib/catalogue'
+import { isCancelled, statusLabel, type FormType } from '@/lib/prestation-behavior'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -17,22 +21,22 @@ import { formatDate, formatMoney, todayISO } from '@/lib/format'
 export const metadata: Metadata = { title: 'Fournisseur' }
 
 export default async function SupplierPage({ params }: { params: Promise<{ id: string }> }) {
-  await requirePageUser(MANAGERS)
+  const actor=await requirePageUser(MANAGERS)
   const id = Number((await params).id)
   const [s] = await db.select().from(suppliers).where(eq(suppliers.id, id))
   if (!s) notFound()
 
   const [serviceRows, paymentRows, currencies] = await Promise.all([
     db
-      .select({ s: services, dossierRef: dossiers.reference })
+      .select({ s: services, dossierRef: dossiers.reference, catalogueName: serviceNameSql, formType: serviceFormSql })
       .from(services)
       .innerJoin(dossiers, eq(dossiers.id, services.dossierId))
-      .where(eq(services.supplierId, id))
+      .where(and(eq(services.supplierId,id),branchScope(services.branchId,actor)))
       .orderBy(desc(services.createdAt)),
     db.select().from(supplierPayments).where(eq(supplierPayments.supplierId, id)).orderBy(desc(supplierPayments.paidAt)),
     currencyOptions(),
   ])
-  const owed = serviceRows.filter((r) => r.s.status !== 'annule').reduce((a, r) => a + Number(r.s.costPrice) * Number(r.s.rate), 0)
+  const owed = serviceRows.filter((r) => !isCancelled(r.s.status)).reduce((a, r) => a + Number(r.s.costPrice) * Number(r.s.rate), 0)
   const paid = paymentRows.reduce((a, p) => a + Number(p.amount) * Number(p.rate), 0)
 
   return (
@@ -130,9 +134,9 @@ export default async function SupplierPage({ params }: { params: Promise<{ id: s
                   <RefTag href={`/dossiers/${sv.dossierId}?tab=prestations`}>{dossierRef}</RefTag>
                   <span className="min-w-0 flex-1 truncate">
                     {sv.description}
-                    <span className="block text-xs text-muted-foreground">{SERVICE_TYPES[sv.type as ServiceType]}</span>
+                    <span className="block text-xs text-muted-foreground">{serviceRows.find(r=>r.s.id===sv.id)?.catalogueName ?? sv.type}</span>
                   </span>
-                  <StatusPill status={sv.status} label={SERVICE_STATUS[sv.type as ServiceType][sv.status]} />
+                  <StatusPill status={sv.status} label={statusLabel((serviceRows.find(r=>r.s.id===sv.id)?.formType??'generic') as FormType,sv.status)} />
                   <span className="font-mono">{formatMoney(sv.costPrice, sv.currency)}</span>
                 </li>
               ))}

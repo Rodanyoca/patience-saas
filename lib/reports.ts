@@ -1,20 +1,17 @@
+import {monthlyFlowQuery} from '@/lib/report-queries'
+import { isoDate } from '@/lib/dates'
+import { catalogueMargins } from '@/lib/prestation-report'
+import { requireUser } from '@/lib/session'
+import { branchScope } from '@/lib/branches'
+import { notCancelled } from '@/lib/service-sql'
 import 'server-only'
 import { sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 
 // All amounts are converted to the base currency (USD) through each row's stored rate.
 
-export type Period = { from: string; to: string }
-
-export function resolvePeriod(sp: { from?: string; to?: string }): Period {
-  const now = new Date()
-  const iso = (d: Date) => d.toISOString().slice(0, 10)
-  const valid = (s?: string) => (s && /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null)
-  return {
-    from: valid(sp.from) ?? iso(new Date(now.getFullYear(), now.getMonth(), 1)),
-    to: valid(sp.to) ?? iso(now),
-  }
-}
+export {resolvePeriod,type Period} from '@/lib/period'
+import {resolvePeriod,type Period} from '@/lib/period'
 
 async function rows<T>(query: ReturnType<typeof sql>) {
   const res = await db.execute(query)
@@ -22,12 +19,13 @@ async function rows<T>(query: ReturnType<typeof sql>) {
 }
 
 export async function periodSummary({ from, to }: Period) {
+  const actor=await requireUser(['admin','responsable'])
   const [r] = await rows<Record<string, string>>(sql`
     select
-      (select coalesce(sum(total * rate),0) from commercial_docs where kind = 'facture' and status <> 'annulee' and issue_date between ${from} and ${to}) as invoiced,
-      (select coalesce(sum(amount * rate),0) from payments where paid_at between ${from} and ${to}) as collected,
-      (select coalesce(sum(sale_price * rate),0) from services where status <> 'annule' and created_at::date between ${from} and ${to}) as sales,
-      (select coalesce(sum(cost_price * rate),0) from services where status <> 'annule' and created_at::date between ${from} and ${to}) as cost,
+      (select coalesce(sum(total * rate),0) from commercial_docs where exists(select 1 from dossiers dx where dx.id=commercial_docs.dossier_id and ${branchScope(sql`dx.branch_id`,actor)}) and kind = 'facture' and status <> 'annulee' and issue_date between ${from} and ${to}) as invoiced,
+      (select coalesce(sum(amount * rate),0) from payments where exists(select 1 from dossiers dx where dx.id=payments.dossier_id and ${branchScope(sql`dx.branch_id`,actor)}) and paid_at between ${from} and ${to}) as collected,
+      (select coalesce(sum(sale_price * rate),0) from services where ${branchScope(sql`services.branch_id`,actor)} and ${notCancelled(sql`status`)} and created_at::date between ${from} and ${to}) as sales,
+      (select coalesce(sum(cost_price * rate),0) from services where ${branchScope(sql`services.branch_id`,actor)} and ${notCancelled(sql`status`)} and created_at::date between ${from} and ${to}) as cost,
       (select coalesce(sum(amount * rate),0) from supplier_payments where paid_at between ${from} and ${to}) as supplier_paid,
       (select coalesce(sum(amount * rate),0) from expenses where paid_at between ${from} and ${to}) as expenses,
       (select coalesce(sum(case when direction = 'entree' then amount * rate else -amount * rate end),0) from cash_movements where occurred_at between ${from} and ${to}) as cash_adjustments
@@ -45,36 +43,24 @@ export async function periodSummary({ from, to }: Period) {
   }
 }
 
-export async function monthlyFlows({ from, to }: Period) {
-  return rows<{ month: string; recettes: string; fournisseurs: string; depenses: string }>(sql`
-    with months as (
-      select to_char(m, 'YYYY-MM') as month
-      from generate_series(date_trunc('month', ${from}::date), date_trunc('month', ${to}::date), interval '1 month') m
-    )
-    select m.month,
-      coalesce((select sum(amount * rate) from payments where to_char(paid_at, 'YYYY-MM') = m.month and paid_at between ${from} and ${to}), 0) as recettes,
-      coalesce((select sum(amount * rate) from supplier_payments where to_char(paid_at, 'YYYY-MM') = m.month and paid_at between ${from} and ${to}), 0) as fournisseurs,
-      coalesce((select sum(amount * rate) from expenses where to_char(paid_at, 'YYYY-MM') = m.month and paid_at between ${from} and ${to}), 0) as depenses
-    from months m order by m.month
-  `)
+export async function monthlyFlows(period:Period){
+ const actor=await requireUser(['admin','responsable'])
+ return rows<{month:string;recettes:string;fournisseurs:string;depenses:string}>(monthlyFlowQuery(actor,period))
 }
 
-export async function marginByType({ from, to }: Period) {
-  return rows<{ type: string; count: number; sales: string; cost: string }>(sql`
-    select type, count(*)::int as count, coalesce(sum(sale_price * rate),0) as sales, coalesce(sum(cost_price * rate),0) as cost
-    from services where status <> 'annule' and created_at::date between ${from} and ${to}
-    group by type order by sales desc
-  `)
+export async function marginByType(period: Period) {
+  return catalogueMargins(await requireUser(),period)
 }
 
 export async function marginByDossier({ from, to }: Period) {
+  const actor=await requireUser()
   return rows<{ id: number; reference: string; title: string; client: string; sales: string; cost: string }>(sql`
     select d.id, d.reference, d.title, c.first_name || ' ' || upper(c.last_name) as client,
       coalesce(sum(s.sale_price * s.rate),0) as sales, coalesce(sum(s.cost_price * s.rate),0) as cost
     from dossiers d
     join clients c on c.id = d.client_id
-    join services s on s.dossier_id = d.id and s.status <> 'annule'
-    where d.created_at::date between ${from} and ${to}
+    join services s on s.dossier_id = d.id and ${notCancelled(sql`s.status`)}
+    where ${branchScope(sql`d.branch_id`,actor)} and d.created_at::date between ${from} and ${to}
     group by d.id, c.first_name, c.last_name
     order by (coalesce(sum(s.sale_price * s.rate),0) - coalesce(sum(s.cost_price * s.rate),0)) desc
     limit 100
@@ -89,9 +75,10 @@ export async function expensesByCategory({ from, to }: Period) {
 }
 
 export async function supplierBalances() {
+  const actor=await requireUser()
   return rows<{ id: number; name: string; category: string; active: boolean; owed: string; paid: string }>(sql`
     select s.id, s.name, s.category, s.active,
-      coalesce((select sum(cost_price * rate) from services where supplier_id = s.id and status <> 'annule'), 0) as owed,
+      coalesce((select sum(cost_price * rate) from services where ${branchScope(sql`services.branch_id`,actor)} and supplier_id = s.id and ${notCancelled(sql`status`)}), 0) as owed,
       coalesce((select sum(amount * rate) from supplier_payments where supplier_id = s.id), 0) as paid
     from suppliers s order by s.name
   `)
@@ -111,6 +98,7 @@ export type CashLine = {
 
 /** Cash journal: cash-method receipts and payouts plus manual cash movements. */
 export async function cashJournal({ from, to }: Period) {
+  await requireUser(['admin','responsable'])
   const opening = await rows<{ balance: string }>(sql`
     select
       coalesce((select sum(amount * rate) from payments where method = 'especes' and paid_at < ${from}), 0)
@@ -133,17 +121,18 @@ export async function cashJournal({ from, to }: Period) {
       union all
       select m.occurred_at::text, case when m.direction = 'entree' then 'Entrée de caisse' else 'Sortie de caisse' end, m.label, m.direction, m.amount::text, m.currency, (m.amount * m.rate)::text, 'cash', m.id, m.created_at
       from cash_movements m where m.occurred_at between ${from} and ${to}
-    ) j order by date, created_at
+    ) j order by date, created_at limit 10001
   `)
   return { opening: Number(opening[0]?.balance ?? 0), lines }
 }
 
 export async function receivables() {
+  const actor=await requireUser()
   return rows<{ id: number; number: string; client: string; client_id: number; dossier_id: number; due_date: string | null; currency: string; total: string; paid: string }>(sql`
     select d.id, d.number, c.first_name || ' ' || upper(c.last_name) as client, c.id as client_id, d.dossier_id, d.due_date::text, d.currency, d.total,
       coalesce((select sum(applied_amount) from payments p where p.invoice_id = d.id), 0) as paid
     from commercial_docs d join clients c on c.id = d.client_id
-    where d.kind = 'facture' and d.status in ('emise', 'partielle')
+    where exists(select 1 from dossiers dx where dx.id=d.dossier_id and ${branchScope(sql`dx.branch_id`,actor)}) and d.kind = 'facture' and d.status in ('emise', 'partielle')
     order by d.due_date nulls last
   `)
 }

@@ -1,0 +1,2 @@
+const fs=require('fs'),sharp=require('sharp');
+(async()=>{fs.mkdirSync('public/brand',{recursive:true});for(const [src,name,width]of [['LP simple P ouvert en bas corrige.png','la-patience',256],['Logo CONSTRUCTION en jaune.png','construction',640],['TRAVEL avion or detaille 1.png','travel',640]]){const dest='public/brand/'+name+'.webp';await sharp('public/'+src).resize({width,withoutEnlargement:true}).webp({quality:90,alphaQuality:100}).toFile(dest);console.log(name+': '+fs.statSync(dest).size+' octets')}})().catch(()=>{process.exitCode=1});

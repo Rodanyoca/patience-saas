@@ -1,4 +1,5 @@
 import 'server-only'
+import { cache } from 'react'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
@@ -11,7 +12,7 @@ export type CurrentUser = {
   role: Role
 }
 
-export async function getCurrentUser(): Promise<CurrentUser | null> {
+export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return null
   const u = session.user as typeof session.user & { role?: string; active?: boolean }
@@ -22,7 +23,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     email: u.email,
     role: (u.role as Role) ?? 'agent',
   }
-}
+})
 
 /** For server components: redirects instead of throwing. */
 export async function requirePageUser(roles?: Role[]) {
@@ -42,4 +43,4 @@ export async function requireUser(roles?: Role[]) {
   return user
 }
 
-export const MANAGERS: Role[] = ['admin', 'responsable']
+export { MANAGERS } from '@/lib/roles'

@@ -1,0 +1,108 @@
+{
+  "date": "2026-11-12T21:33:55.451Z",
+  "database": "patience_local",
+  "role": "patience_app",
+  "before": {
+    "tables": 22,
+    "columns": 229,
+    "counts": {
+      "user": 1,
+      "session": 1,
+      "account": 1,
+      "verification": 0,
+      "agency_settings": 1,
+      "counters": 0,
+      "currencies": 1,
+      "clients": 0,
+      "travelers": 0,
+      "dossiers": 0,
+      "dossier_travelers": 0,
+      "dossier_steps": 0,
+      "suppliers": 0,
+      "services": 0,
+      "commercial_docs": 0,
+      "doc_lines": 0,
+      "payments": 0,
+      "supplier_payments": 0,
+      "expenses": 0,
+      "cash_movements": 0,
+      "files": 0,
+      "audit_logs": 0
+    }
+  },
+  "after": {
+    "applicationTables": 25,
+    "applicationColumns": 252,
+    "migrationLedgerTables": 1,
+    "counts": {
+      "user": 1,
+      "session": 1,
+      "account": 1,
+      "verification": 0,
+      "agency_settings": 1,
+      "counters": 0,
+      "currencies": 1,
+      "clients": 0,
+      "travelers": 0,
+      "dossiers": 0,
+      "dossier_travelers": 0,
+      "dossier_steps": 0,
+      "suppliers": 0,
+      "services": 0,
+      "commercial_docs": 0,
+      "doc_lines": 0,
+      "payments": 0,
+      "supplier_payments": 0,
+      "expenses": 0,
+      "cash_movements": 0,
+      "files": 0,
+      "audit_logs": 0
+    }
+  },
+  "changedHistoricalCounts": [],
+  "unchangedSnapshots": {
+    "services": true,
+    "commercial_docs": true,
+    "doc_lines": true
+  },
+  "branches": [
+    {
+      "code": "CONSTRUCTION",
+      "name": "LA PATIENCE CONSTRUCTION",
+      "active": true
+    },
+    {
+      "code": "TRAVEL",
+      "name": "LA PATIENCE TRAVEL",
+      "active": true
+    }
+  ],
+  "catalogue": [
+    {
+      "code": "TRV-ASS",
+      "name": "Assurance voyage",
+      "form_type": "insurance",
+      "legacy_type": "assurance"
+    },
+    {
+      "code": "TRV-BIL",
+      "name": "Billetterie aérienne",
+      "form_type": "flight",
+      "legacy_type": "billet"
+    },
+    {
+      "code": "TRV-HOT",
+      "name": "Réservation d'hôtel",
+      "form_type": "hotel",
+      "legacy_type": "hotel"
+    },
+    {
+      "code": "TRV-VIS",
+      "name": "Assistance visa",
+      "form_type": "visa",
+      "legacy_type": "visa"
+    }
+  ],
+  "mapping": [],
+  "unmatched": []
+}

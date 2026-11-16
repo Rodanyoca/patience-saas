@@ -1,0 +1,104 @@
+{
+  "date": "2026-11-16T09:54:52.327Z",
+  "scope": "LA PATIENCE — code local et base patience_local",
+  "changes": [
+    "Contrôles de branche côté serveur et modification de dossier transactionnelle",
+    "Encaissements transactionnels avec verrouillage et identifiant de demande",
+    "Conversion de devis protégée contre les appels concurrents",
+    "Calculs décimaux et validation civile des dates",
+    "Clés étrangères, contraintes et index SQL",
+    "Instantanés commerciaux et cache privé de PDF",
+    "Pagination clients/dossiers/journal/facturation et états de chargement",
+    "Agrégation mensuelle SQL et compteurs clients corrigés",
+    "Pool PostgreSQL borné et déduplication par requête",
+    "Logos WebP et retrait des dépendances inutilisées",
+    "Première initialisation protégée par clé privée et inscription publique désactivée",
+    "Pipeline de vérification et procédure de livraison sauvegardée"
+  ],
+  "database": {
+    "date": "2026-11-16T09:45:07.993Z",
+    "database": "patience_local",
+    "backup": "before-client-delivery-1794822307221.dump",
+    "before": {
+      "generated_documents": 0,
+      "payments": 1,
+      "doc_lines": 5,
+      "commercial_docs": 4,
+      "services": 2,
+      "dossier_steps": 9,
+      "dossiers": 1,
+      "clients": 1,
+      "supplier_payments": 0,
+      "suppliers": 1,
+      "expenses": 0,
+      "cash_movements": 0,
+      "audit_logs": 11,
+      "counters": 5,
+      "session": 0,
+      "account": 1,
+      "verification": 0,
+      "branch_memberships": 1,
+      "user": 1
+    },
+    "after": {
+      "generated_documents": 0,
+      "payments": 0,
+      "doc_lines": 0,
+      "commercial_docs": 0,
+      "services": 0,
+      "dossier_steps": 0,
+      "dossiers": 0,
+      "clients": 0,
+      "supplier_payments": 0,
+      "suppliers": 0,
+      "expenses": 0,
+      "cash_movements": 0,
+      "audit_logs": 0,
+      "counters": 0,
+      "session": 0,
+      "account": 0,
+      "verification": 0,
+      "branch_memberships": 0,
+      "user": 0
+    },
+    "references": {
+      "branches": 2,
+      "travelPrestationTypes": 4
+    },
+    "accounts": 0
+  },
+  "assets": {
+    "originalBytes": 6010926,
+    "optimizedBytes": 79580
+  },
+  "verification": {
+    "typecheck": "réussi",
+    "productionBuild": "réussi",
+    "sqlSchema": "23 tables applicatives, 231 colonnes, aucune incohérence",
+    "integrationTests": {
+      "passed": 28,
+      "failed": 0
+    },
+    "http": "15 contrôles réussis sur base isolée",
+    "browser": "Connexion, listes, création client, mobile, refus agent, première initialisation et refus de seconde initialisation vérifiés",
+    "virgin": "Écran initialisation desktop/mobile, clé incorrecte refusée ; aucun compte créé dans patience_local",
+    "diffCheck": "réussi"
+  },
+  "dependencyAlerts": {
+    "info": 0,
+    "low": 0,
+    "moderate": 6,
+    "high": 0,
+    "critical": 0,
+    "total": 6
+  },
+  "limits": [
+    "Aucun déploiement ni paramétrage Vercel effectué ; métriques du compte non accessibles",
+    "Mode hors ligne PWA non livré",
+    "Comptabilité analytique complète par branche non introduite : charges communes explicitement indiquées",
+    "Sauvegarde avant suppression et lecture de son catalogue vérifiées ; restauration complète non exécutée"
+  ],
+  "gitDiffStat": " .gitignore                                       |   13 +-\n app/(app)/administration/page.tsx                |    4 +-\n app/(app)/clients/[id]/page.tsx                  |  132 +-\n app/(app)/clients/page.tsx                       |   24 +-\n app/(app)/documents/page.tsx                     |  114 -\n app/(app)/dossiers/[id]/_components/overview.tsx |   86 +-\n app/(app)/dossiers/[id]/_components/services.tsx |  164 +-\n app/(app)/dossiers/[id]/_components/ticket.tsx   |    2 +-\n app/(app)/dossiers/[id]/page.tsx                 |   13 +-\n app/(app)/dossiers/new/page.tsx                  |   36 +-\n app/(app)/dossiers/page.tsx                      |   28 +-\n app/(app)/facturation/[id]/page.tsx              |    6 +\n app/(app)/facturation/page.tsx                   |   40 +-\n app/(app)/finances/page.tsx                      |    2 +-\n app/(app)/fournisseurs/[id]/page.tsx             |   16 +-\n app/(app)/journal/page.tsx                       |   14 +-\n app/(app)/page.tsx                               |   31 +-\n app/(app)/prestations/page.tsx                   |  175 +-\n app/actions/billing.ts                           |  371 +--\n app/actions/clients.ts                           |   92 +-\n app/actions/dossiers.ts                          |  173 +-\n app/actions/files.ts                             |   79 -\n app/actions/finance.ts                           |   11 +-\n app/api/export/route.ts                          |   16 +-\n app/api/files/[id]/route.ts                      |   37 -\n app/api/pdf/doc/[id]/route.ts                    |   13 +-\n app/api/pdf/receipt/[id]/route.ts                |    7 +-\n app/globals.css                                  |   92 +-\n app/layout.tsx                                   |    6 +-\n app/sign-in/page.tsx                             |   73 +-\n components/app-sidebar.tsx                       |   25 +-\n components/auth-form.tsx                         |   74 +-\n components/client-fields.tsx                     |   51 +-\n components/file-list.tsx                         |  145 --\n components/forms.tsx                             |    2 -\n components/service-form.tsx                      |  151 +-\n components/shared.tsx                            |    4 +-\n components/ui/button.tsx                         |    2 +-\n components/ui/table.tsx                          |    4 +-\n lib/auth.ts                                      |    3 +-\n lib/constants.ts                                 |   21 +-\n lib/db/index.ts                                  |    9 +-\n lib/db/schema.ts                                 |  137 +-\n lib/file-access.ts                               |   12 -\n lib/pdf.tsx                                      |   15 +-\n lib/reports.ts                                   |   65 +-\n lib/server-utils.ts                              |   31 +-\n lib/session.ts                                   |    7 +-\n next.config.mjs                                  |    5 +-\n package.json                                     |   23 +-\n pnpm-lock.yaml                                   | 2691 ++++++++--------------\n pnpm-workspace.yaml                              |    3 +\n tsconfig.json                                    |   18 +-\n 53 files changed, 1605 insertions(+), 3763 deletions(-)\n",
+  "gitStatus": " M .gitignore\n M app/(app)/administration/page.tsx\n M app/(app)/clients/[id]/page.tsx\n M app/(app)/clients/page.tsx\n D app/(app)/documents/page.tsx\n M app/(app)/dossiers/[id]/_components/overview.tsx\n M app/(app)/dossiers/[id]/_components/services.tsx\n M app/(app)/dossiers/[id]/_components/ticket.tsx\n M app/(app)/dossiers/[id]/page.tsx\n M app/(app)/dossiers/new/page.tsx\n M app/(app)/dossiers/page.tsx\n M app/(app)/facturation/[id]/page.tsx\n M app/(app)/facturation/page.tsx\n M app/(app)/finances/page.tsx\n M app/(app)/fournisseurs/[id]/page.tsx\n M app/(app)/journal/page.tsx\n M app/(app)/page.tsx\n M app/(app)/prestations/page.tsx\n M app/actions/billing.ts\n M app/actions/clients.ts\n M app/actions/dossiers.ts\n D app/actions/files.ts\n M app/actions/finance.ts\n M app/api/export/route.ts\n D app/api/files/[id]/route.ts\n M app/api/pdf/doc/[id]/route.ts\n M app/api/pdf/receipt/[id]/route.ts\n M app/globals.css\n M app/layout.tsx\n M app/sign-in/page.tsx\n M components/app-sidebar.tsx\n M components/auth-form.tsx\n M components/client-fields.tsx\n D components/file-list.tsx\n M components/forms.tsx\n M components/service-form.tsx\n M components/shared.tsx\n M components/ui/button.tsx\n M components/ui/table.tsx\n M lib/auth.ts\n M lib/constants.ts\n M lib/db/index.ts\n M lib/db/schema.ts\n D lib/file-access.ts\n M lib/pdf.tsx\n M lib/reports.ts\n M lib/server-utils.ts\n M lib/session.ts\n M next.config.mjs\n M package.json\n M pnpm-lock.yaml\n M pnpm-workspace.yaml\n M tsconfig.json\n?? .env.example\n?? .github/\n?? CAHIER_DES_CHARGES_LA_PATIENCE.md\n?? app/(app)/administration/branches/\n?? app/(app)/administration/prestations/\n?? app/(app)/error.tsx\n?? app/(app)/loading.tsx\n?? app/actions/catalogue.ts\n?? app/api/setup/\n?? app/error.tsx\n?? app/vendor/\n?? components/catalogue-form.tsx\n?? components/pagination.tsx\n?? docs/\n?? drizzle.config.ts\n?? lib/billing-commands.ts\n?? lib/branches.ts\n?? lib/brand.ts\n?? lib/catalogue-commands.ts\n?? lib/catalogue.ts\n?? lib/client-query.ts\n?? lib/commercial-access.ts\n?? lib/commercial-scope.ts\n?? lib/commercial-snapshot.ts\n?? lib/dates.ts\n?? lib/dossier-commands.ts\n?? lib/dossier-values.ts\n?? lib/money.ts\n?? lib/pagination.ts\n?? lib/pdf-cache.ts\n?? lib/period.ts\n?? lib/prestation-behavior.ts\n?? lib/prestation-report.ts\n?? lib/report-queries.ts\n?? lib/request-origin.ts\n?? lib/roles.ts\n?? lib/service-commands.ts\n?? lib/service-sql.ts\n?? lib/setup.ts\n?? migrations/\n?? next-env.d.ts\n?? package-lock.json\n?? \"public/LP simple P ouvert en bas corrige.png\"\n?? \"public/Logo CONSTRUCTION en jaune.png\"\n?? \"public/TRAVEL avion or detaille 1.png\"\n?? public/brand/\n?? scripts/\n?? tests/\n",
+  "untrackedFiles": ".env.example\n.github/workflows/verify.yml\nCAHIER_DES_CHARGES_LA_PATIENCE.md\napp/(app)/administration/branches/page.tsx\napp/(app)/administration/prestations/error.tsx\napp/(app)/administration/prestations/page.tsx\napp/(app)/error.tsx\napp/(app)/loading.tsx\napp/actions/catalogue.ts\napp/api/setup/route.ts\napp/error.tsx\napp/vendor/shadcn-LICENSE.md\napp/vendor/shadcn.css\ncomponents/catalogue-form.tsx\ncomponents/pagination.tsx\ndocs/ETAT_LIVRAISON_VIERGE.json\ndocs/LIVRAISON_CLIENT.txt\ndocs/MIGRATION_PRESTATIONS_2026-11-12.json\ndocs/RAPPORT_IMPLEMENTATION_PRESTATIONS.md\ndocs/REFERENTIEL_PRESTATIONS.md\ndrizzle.config.ts\nlib/billing-commands.ts\nlib/branches.ts\nlib/brand.ts\nlib/catalogue-commands.ts\nlib/catalogue.ts\nlib/client-query.ts\nlib/commercial-access.ts\nlib/commercial-scope.ts\nlib/commercial-snapshot.ts\nlib/dates.ts\nlib/dossier-commands.ts\nlib/dossier-values.ts\nlib/money.ts\nlib/pagination.ts\nlib/pdf-cache.ts\nlib/period.ts\nlib/prestation-behavior.ts\nlib/prestation-report.ts\nlib/report-queries.ts\nlib/request-origin.ts\nlib/roles.ts\nlib/service-commands.ts\nlib/service-sql.ts\nlib/setup.ts\nmigrations/0000_legacy.sql\nmigrations/0001_branch_catalog.sql\nmigrations/0002_remove_client_identity.sql\nmigrations/0003_remove_client_documents_travelers.sql\nmigrations/0004_remove_dossier_documents.sql\nmigrations/0005_delivery_hardening.sql\nmigrations/0006_delivery_defaults.sql\nmigrations/legacy-columns.json\nnext-env.d.ts\npackage-lock.json\npublic/LP simple P ouvert en bas corrige.png\npublic/Logo CONSTRUCTION en jaune.png\npublic/TRAVEL avion or detaille 1.png\npublic/brand/construction.webp\npublic/brand/la-patience.webp\npublic/brand/travel.webp\nscripts/catalogue-http-smoke.mjs\nscripts/catalogue-test-runtime.cjs\nscripts/db-check.mjs\nscripts/db-migrate.mjs\nscripts/delivery-browser-smoke.cjs\nscripts/optimize-brand.cjs\nscripts/prepare-delivery.mjs\ntests/catalogue/catalogue.test.cjs\n"
+}

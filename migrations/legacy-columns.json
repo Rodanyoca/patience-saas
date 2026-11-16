@@ -1,0 +1,918 @@
+[
+  {
+    "table": "user",
+    "column": "id"
+  },
+  {
+    "table": "user",
+    "column": "name"
+  },
+  {
+    "table": "user",
+    "column": "email"
+  },
+  {
+    "table": "user",
+    "column": "emailVerified"
+  },
+  {
+    "table": "user",
+    "column": "image"
+  },
+  {
+    "table": "user",
+    "column": "createdAt"
+  },
+  {
+    "table": "user",
+    "column": "updatedAt"
+  },
+  {
+    "table": "user",
+    "column": "role"
+  },
+  {
+    "table": "user",
+    "column": "active"
+  },
+  {
+    "table": "session",
+    "column": "id"
+  },
+  {
+    "table": "session",
+    "column": "expiresAt"
+  },
+  {
+    "table": "session",
+    "column": "token"
+  },
+  {
+    "table": "session",
+    "column": "createdAt"
+  },
+  {
+    "table": "session",
+    "column": "updatedAt"
+  },
+  {
+    "table": "session",
+    "column": "ipAddress"
+  },
+  {
+    "table": "session",
+    "column": "userAgent"
+  },
+  {
+    "table": "session",
+    "column": "userId"
+  },
+  {
+    "table": "account",
+    "column": "id"
+  },
+  {
+    "table": "account",
+    "column": "accountId"
+  },
+  {
+    "table": "account",
+    "column": "providerId"
+  },
+  {
+    "table": "account",
+    "column": "userId"
+  },
+  {
+    "table": "account",
+    "column": "accessToken"
+  },
+  {
+    "table": "account",
+    "column": "refreshToken"
+  },
+  {
+    "table": "account",
+    "column": "idToken"
+  },
+  {
+    "table": "account",
+    "column": "accessTokenExpiresAt"
+  },
+  {
+    "table": "account",
+    "column": "refreshTokenExpiresAt"
+  },
+  {
+    "table": "account",
+    "column": "scope"
+  },
+  {
+    "table": "account",
+    "column": "password"
+  },
+  {
+    "table": "account",
+    "column": "createdAt"
+  },
+  {
+    "table": "account",
+    "column": "updatedAt"
+  },
+  {
+    "table": "verification",
+    "column": "id"
+  },
+  {
+    "table": "verification",
+    "column": "identifier"
+  },
+  {
+    "table": "verification",
+    "column": "value"
+  },
+  {
+    "table": "verification",
+    "column": "expiresAt"
+  },
+  {
+    "table": "verification",
+    "column": "createdAt"
+  },
+  {
+    "table": "verification",
+    "column": "updatedAt"
+  },
+  {
+    "table": "agency_settings",
+    "column": "id"
+  },
+  {
+    "table": "agency_settings",
+    "column": "name"
+  },
+  {
+    "table": "agency_settings",
+    "column": "address"
+  },
+  {
+    "table": "agency_settings",
+    "column": "phone"
+  },
+  {
+    "table": "agency_settings",
+    "column": "email"
+  },
+  {
+    "table": "agency_settings",
+    "column": "website"
+  },
+  {
+    "table": "agency_settings",
+    "column": "tax_id"
+  },
+  {
+    "table": "agency_settings",
+    "column": "default_currency"
+  },
+  {
+    "table": "agency_settings",
+    "column": "dossier_prefix"
+  },
+  {
+    "table": "agency_settings",
+    "column": "quote_prefix"
+  },
+  {
+    "table": "agency_settings",
+    "column": "invoice_prefix"
+  },
+  {
+    "table": "agency_settings",
+    "column": "receipt_prefix"
+  },
+  {
+    "table": "agency_settings",
+    "column": "client_prefix"
+  },
+  {
+    "table": "agency_settings",
+    "column": "document_footer"
+  },
+  {
+    "table": "agency_settings",
+    "column": "updated_at"
+  },
+  {
+    "table": "counters",
+    "column": "key"
+  },
+  {
+    "table": "counters",
+    "column": "value"
+  },
+  {
+    "table": "currencies",
+    "column": "code"
+  },
+  {
+    "table": "currencies",
+    "column": "name"
+  },
+  {
+    "table": "currencies",
+    "column": "symbol"
+  },
+  {
+    "table": "currencies",
+    "column": "rate"
+  },
+  {
+    "table": "currencies",
+    "column": "active"
+  },
+  {
+    "table": "clients",
+    "column": "id"
+  },
+  {
+    "table": "clients",
+    "column": "reference"
+  },
+  {
+    "table": "clients",
+    "column": "type"
+  },
+  {
+    "table": "clients",
+    "column": "first_name"
+  },
+  {
+    "table": "clients",
+    "column": "last_name"
+  },
+  {
+    "table": "clients",
+    "column": "company_name"
+  },
+  {
+    "table": "clients",
+    "column": "phone"
+  },
+  {
+    "table": "clients",
+    "column": "email"
+  },
+  {
+    "table": "clients",
+    "column": "address"
+  },
+  {
+    "table": "clients",
+    "column": "city"
+  },
+  {
+    "table": "clients",
+    "column": "country"
+  },
+  {
+    "table": "clients",
+    "column": "nationality"
+  },
+  {
+    "table": "clients",
+    "column": "birth_date"
+  },
+  {
+    "table": "clients",
+    "column": "passport_number"
+  },
+  {
+    "table": "clients",
+    "column": "passport_expiry"
+  },
+  {
+    "table": "clients",
+    "column": "notes"
+  },
+  {
+    "table": "clients",
+    "column": "created_by"
+  },
+  {
+    "table": "clients",
+    "column": "created_at"
+  },
+  {
+    "table": "clients",
+    "column": "updated_at"
+  },
+  {
+    "table": "travelers",
+    "column": "id"
+  },
+  {
+    "table": "travelers",
+    "column": "client_id"
+  },
+  {
+    "table": "travelers",
+    "column": "first_name"
+  },
+  {
+    "table": "travelers",
+    "column": "last_name"
+  },
+  {
+    "table": "travelers",
+    "column": "relation"
+  },
+  {
+    "table": "travelers",
+    "column": "birth_date"
+  },
+  {
+    "table": "travelers",
+    "column": "gender"
+  },
+  {
+    "table": "travelers",
+    "column": "nationality"
+  },
+  {
+    "table": "travelers",
+    "column": "passport_number"
+  },
+  {
+    "table": "travelers",
+    "column": "passport_expiry"
+  },
+  {
+    "table": "travelers",
+    "column": "created_at"
+  },
+  {
+    "table": "dossiers",
+    "column": "id"
+  },
+  {
+    "table": "dossiers",
+    "column": "reference"
+  },
+  {
+    "table": "dossiers",
+    "column": "client_id"
+  },
+  {
+    "table": "dossiers",
+    "column": "agent_id"
+  },
+  {
+    "table": "dossiers",
+    "column": "title"
+  },
+  {
+    "table": "dossiers",
+    "column": "destination"
+  },
+  {
+    "table": "dossiers",
+    "column": "status"
+  },
+  {
+    "table": "dossiers",
+    "column": "priority"
+  },
+  {
+    "table": "dossiers",
+    "column": "departure_date"
+  },
+  {
+    "table": "dossiers",
+    "column": "return_date"
+  },
+  {
+    "table": "dossiers",
+    "column": "due_date"
+  },
+  {
+    "table": "dossiers",
+    "column": "notes"
+  },
+  {
+    "table": "dossiers",
+    "column": "created_by"
+  },
+  {
+    "table": "dossiers",
+    "column": "created_at"
+  },
+  {
+    "table": "dossiers",
+    "column": "updated_at"
+  },
+  {
+    "table": "dossiers",
+    "column": "closed_at"
+  },
+  {
+    "table": "dossier_travelers",
+    "column": "dossier_id"
+  },
+  {
+    "table": "dossier_travelers",
+    "column": "traveler_id"
+  },
+  {
+    "table": "dossier_steps",
+    "column": "id"
+  },
+  {
+    "table": "dossier_steps",
+    "column": "dossier_id"
+  },
+  {
+    "table": "dossier_steps",
+    "column": "label"
+  },
+  {
+    "table": "dossier_steps",
+    "column": "note"
+  },
+  {
+    "table": "dossier_steps",
+    "column": "user_id"
+  },
+  {
+    "table": "dossier_steps",
+    "column": "user_name"
+  },
+  {
+    "table": "dossier_steps",
+    "column": "created_at"
+  },
+  {
+    "table": "suppliers",
+    "column": "id"
+  },
+  {
+    "table": "suppliers",
+    "column": "name"
+  },
+  {
+    "table": "suppliers",
+    "column": "category"
+  },
+  {
+    "table": "suppliers",
+    "column": "contact_name"
+  },
+  {
+    "table": "suppliers",
+    "column": "phone"
+  },
+  {
+    "table": "suppliers",
+    "column": "email"
+  },
+  {
+    "table": "suppliers",
+    "column": "address"
+  },
+  {
+    "table": "suppliers",
+    "column": "notes"
+  },
+  {
+    "table": "suppliers",
+    "column": "active"
+  },
+  {
+    "table": "suppliers",
+    "column": "created_at"
+  },
+  {
+    "table": "services",
+    "column": "id"
+  },
+  {
+    "table": "services",
+    "column": "dossier_id"
+  },
+  {
+    "table": "services",
+    "column": "type"
+  },
+  {
+    "table": "services",
+    "column": "status"
+  },
+  {
+    "table": "services",
+    "column": "supplier_id"
+  },
+  {
+    "table": "services",
+    "column": "description"
+  },
+  {
+    "table": "services",
+    "column": "cost_price"
+  },
+  {
+    "table": "services",
+    "column": "sale_price"
+  },
+  {
+    "table": "services",
+    "column": "currency"
+  },
+  {
+    "table": "services",
+    "column": "rate"
+  },
+  {
+    "table": "services",
+    "column": "details"
+  },
+  {
+    "table": "services",
+    "column": "created_at"
+  },
+  {
+    "table": "services",
+    "column": "updated_at"
+  },
+  {
+    "table": "commercial_docs",
+    "column": "id"
+  },
+  {
+    "table": "commercial_docs",
+    "column": "kind"
+  },
+  {
+    "table": "commercial_docs",
+    "column": "number"
+  },
+  {
+    "table": "commercial_docs",
+    "column": "dossier_id"
+  },
+  {
+    "table": "commercial_docs",
+    "column": "client_id"
+  },
+  {
+    "table": "commercial_docs",
+    "column": "status"
+  },
+  {
+    "table": "commercial_docs",
+    "column": "issue_date"
+  },
+  {
+    "table": "commercial_docs",
+    "column": "due_date"
+  },
+  {
+    "table": "commercial_docs",
+    "column": "currency"
+  },
+  {
+    "table": "commercial_docs",
+    "column": "rate"
+  },
+  {
+    "table": "commercial_docs",
+    "column": "subtotal"
+  },
+  {
+    "table": "commercial_docs",
+    "column": "discount"
+  },
+  {
+    "table": "commercial_docs",
+    "column": "total"
+  },
+  {
+    "table": "commercial_docs",
+    "column": "notes"
+  },
+  {
+    "table": "commercial_docs",
+    "column": "source_quote_id"
+  },
+  {
+    "table": "commercial_docs",
+    "column": "created_by"
+  },
+  {
+    "table": "commercial_docs",
+    "column": "created_at"
+  },
+  {
+    "table": "doc_lines",
+    "column": "id"
+  },
+  {
+    "table": "doc_lines",
+    "column": "doc_id"
+  },
+  {
+    "table": "doc_lines",
+    "column": "service_id"
+  },
+  {
+    "table": "doc_lines",
+    "column": "description"
+  },
+  {
+    "table": "doc_lines",
+    "column": "quantity"
+  },
+  {
+    "table": "doc_lines",
+    "column": "unit_price"
+  },
+  {
+    "table": "doc_lines",
+    "column": "total"
+  },
+  {
+    "table": "doc_lines",
+    "column": "position"
+  },
+  {
+    "table": "payments",
+    "column": "id"
+  },
+  {
+    "table": "payments",
+    "column": "receipt_number"
+  },
+  {
+    "table": "payments",
+    "column": "invoice_id"
+  },
+  {
+    "table": "payments",
+    "column": "client_id"
+  },
+  {
+    "table": "payments",
+    "column": "dossier_id"
+  },
+  {
+    "table": "payments",
+    "column": "amount"
+  },
+  {
+    "table": "payments",
+    "column": "currency"
+  },
+  {
+    "table": "payments",
+    "column": "rate"
+  },
+  {
+    "table": "payments",
+    "column": "applied_amount"
+  },
+  {
+    "table": "payments",
+    "column": "method"
+  },
+  {
+    "table": "payments",
+    "column": "reference"
+  },
+  {
+    "table": "payments",
+    "column": "paid_at"
+  },
+  {
+    "table": "payments",
+    "column": "notes"
+  },
+  {
+    "table": "payments",
+    "column": "created_by"
+  },
+  {
+    "table": "payments",
+    "column": "created_at"
+  },
+  {
+    "table": "supplier_payments",
+    "column": "id"
+  },
+  {
+    "table": "supplier_payments",
+    "column": "supplier_id"
+  },
+  {
+    "table": "supplier_payments",
+    "column": "service_id"
+  },
+  {
+    "table": "supplier_payments",
+    "column": "amount"
+  },
+  {
+    "table": "supplier_payments",
+    "column": "currency"
+  },
+  {
+    "table": "supplier_payments",
+    "column": "rate"
+  },
+  {
+    "table": "supplier_payments",
+    "column": "method"
+  },
+  {
+    "table": "supplier_payments",
+    "column": "reference"
+  },
+  {
+    "table": "supplier_payments",
+    "column": "paid_at"
+  },
+  {
+    "table": "supplier_payments",
+    "column": "notes"
+  },
+  {
+    "table": "supplier_payments",
+    "column": "created_by"
+  },
+  {
+    "table": "supplier_payments",
+    "column": "created_at"
+  },
+  {
+    "table": "expenses",
+    "column": "id"
+  },
+  {
+    "table": "expenses",
+    "column": "category"
+  },
+  {
+    "table": "expenses",
+    "column": "label"
+  },
+  {
+    "table": "expenses",
+    "column": "amount"
+  },
+  {
+    "table": "expenses",
+    "column": "currency"
+  },
+  {
+    "table": "expenses",
+    "column": "rate"
+  },
+  {
+    "table": "expenses",
+    "column": "method"
+  },
+  {
+    "table": "expenses",
+    "column": "paid_at"
+  },
+  {
+    "table": "expenses",
+    "column": "notes"
+  },
+  {
+    "table": "expenses",
+    "column": "created_by"
+  },
+  {
+    "table": "expenses",
+    "column": "created_at"
+  },
+  {
+    "table": "cash_movements",
+    "column": "id"
+  },
+  {
+    "table": "cash_movements",
+    "column": "direction"
+  },
+  {
+    "table": "cash_movements",
+    "column": "label"
+  },
+  {
+    "table": "cash_movements",
+    "column": "amount"
+  },
+  {
+    "table": "cash_movements",
+    "column": "currency"
+  },
+  {
+    "table": "cash_movements",
+    "column": "rate"
+  },
+  {
+    "table": "cash_movements",
+    "column": "occurred_at"
+  },
+  {
+    "table": "cash_movements",
+    "column": "notes"
+  },
+  {
+    "table": "cash_movements",
+    "column": "created_by"
+  },
+  {
+    "table": "cash_movements",
+    "column": "created_at"
+  },
+  {
+    "table": "files",
+    "column": "id"
+  },
+  {
+    "table": "files",
+    "column": "client_id"
+  },
+  {
+    "table": "files",
+    "column": "dossier_id"
+  },
+  {
+    "table": "files",
+    "column": "category"
+  },
+  {
+    "table": "files",
+    "column": "name"
+  },
+  {
+    "table": "files",
+    "column": "pathname"
+  },
+  {
+    "table": "files",
+    "column": "content_type"
+  },
+  {
+    "table": "files",
+    "column": "size"
+  },
+  {
+    "table": "files",
+    "column": "confidential"
+  },
+  {
+    "table": "files",
+    "column": "uploaded_by"
+  },
+  {
+    "table": "files",
+    "column": "uploaded_by_name"
+  },
+  {
+    "table": "files",
+    "column": "created_at"
+  },
+  {
+    "table": "audit_logs",
+    "column": "id"
+  },
+  {
+    "table": "audit_logs",
+    "column": "user_id"
+  },
+  {
+    "table": "audit_logs",
+    "column": "user_name"
+  },
+  {
+    "table": "audit_logs",
+    "column": "action"
+  },
+  {
+    "table": "audit_logs",
+    "column": "entity"
+  },
+  {
+    "table": "audit_logs",
+    "column": "entity_id"
+  },
+  {
+    "table": "audit_logs",
+    "column": "details"
+  },
+  {
+    "table": "audit_logs",
+    "column": "created_at"
+  }
+]

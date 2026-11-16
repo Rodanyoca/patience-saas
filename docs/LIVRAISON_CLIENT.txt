@@ -1,0 +1,45 @@
+LA PATIENCE — Livraison et première utilisation
+
+État livré
+La base locale patience_local ne contient aucun compte ni donnée opérationnelle.
+Les branches Travel et Construction sont conservées. Les quatre prestations Travel initiales sont conservées ; Construction reste sans prestations configurées. Les devises existantes sont conservées ; le taux USD est remis à 1. Les coordonnées de démonstration de l’entreprise sont effacées et les compteurs remis à zéro.
+
+Premier démarrage local
+1. Installer les dépendances avec npm ci.
+2. Copier .env.example vers .env.local sur une nouvelle machine et renseigner DATABASE_URL, BETTER_AUTH_URL, BETTER_AUTH_SECRET et PATIENCE_SETUP_TOKEN. Utiliser des secrets aléatoires propres à cette installation.
+3. Appliquer npm run db:migrate puis npm run db:check. Pour une base portant un autre nom, définir explicitement PATIENCE_MIGRATION_DATABASE. Les outils pg_dump et pg_restore doivent être installés et accessibles ; PG_BIN peut indiquer leur dossier.
+4. Exécuter npm run build puis npm run start.
+5. Ouvrir /sign-in. Utiliser la clé d’initialisation privée remise au propriétaire, saisir son nom et son email et choisir un mot de passe de 12 caractères minimum.
+6. Une fois le compte administrateur créé, retirer PATIENCE_SETUP_TOKEN de l’environnement du serveur et redémarrer celui-ci. Toute initialisation supplémentaire est refusée dès qu’un compte existe.
+7. Compléter les coordonnées de l’entreprise, vérifier les devises et leurs taux, puis créer les comptes employés et leurs affectations.
+
+Clé locale
+La clé de cette machine est dans .local-delivery/INITIALISATION.txt. Ce fichier et .env.local ne doivent jamais être publiés dans Git ni dans l’archive de code. Remettre la clé au propriétaire par un canal séparé.
+
+Production Vercel
+Cette livraison ne constitue pas un déploiement Vercel. Aucun réglage du compte Vercel n’a été modifié.
+Configurer une base PostgreSQL accessible depuis Vercel ; 127.0.0.1 désigne uniquement la machine locale. Choisir une région de fonctions proche de la base. Renseigner BETTER_AUTH_URL avec le domaine public exact, DATABASE_URL, BETTER_AUTH_SECRET et la clé temporaire PATIENCE_SETUP_TOKEN. Dimensionner PG_POOL_MAX selon les connexions disponibles.
+Exécuter les migrations depuis un poste de maintenance ou un pipeline autorisé, jamais au démarrage d’une requête web. Les outils PostgreSQL de sauvegarde sont requis. Activer les sauvegardes automatiques du fournisseur de base et tester leur restauration dans une base isolée. Activer les alertes budgétaires et examiner CPU, mémoire, durée, erreurs et connexions par route.
+
+Sécurité et données
+Les mutations financières sont transactionnelles. Les encaissements verrouillent la facture et les formulaires de paiement portent un identifiant de demande. La conversion d’un devis est protégée par verrouillage et unicité SQL. Les modifications de dossiers vérifient la branche côté serveur.
+Les nouveaux documents commerciaux disposent d’un instantané client/entreprise. Les anciens documents sans instantané disposent d’une lecture compatible. La base de livraison n’en contient aucun.
+Les PDF sont mis en cache en base après vérification des droits. Le cache est recalculé lorsque son empreinte change ; les réponses restent privées.
+Les ventes et encaissements financiers sont limités aux branches autorisées. Les dépenses et paiements fournisseurs restent des charges communes explicitement indiquées. Une comptabilité analytique complète par branche n’est pas introduite dans ce lot.
+Les exports sont limités à cinq ans et à 10 000 lignes par feuille. Le mode hors ligne et la synchronisation PWA ne sont pas livrés comme fonctionnalités opérationnelles.
+
+Sauvegarde avant nettoyage
+Voir docs/ETAT_LIVRAISON_VIERGE.json pour les nombres avant/après et le nom de l’archive. L’archive privée est dans .local-backups. La lecture de son catalogue pg_restore a été vérifiée ; aucune restauration complète de cette sauvegarde n’est annoncée comme exécutée.
+Ne pas remettre .local-backups au client comme données initiales et ne pas importer cette sauvegarde dans sa base vierge.
+
+Maintenance
+npm run typecheck
+npm run test:catalogue (nécessite une base de test explicitement isolée, dont le nom commence par patience_catalog_test_ ; son schéma public est réinitialisé)
+npm run build
+npm run db:check
+npm run db:studio (outil local uniquement, écoute sur 127.0.0.1:4983)
+npm run delivery:inspect (lecture seule)
+npm run delivery:prepare est destructif pour les données opérationnelles et les comptes. Il est réservé à la préparation initiale autorisée, limité à patience_local sur la machine locale et effectue une sauvegarde avant suppression. Ne pas l’exécuter après le début d’exploitation du client.
+
+Limites de validation
+Les économies Vercel ne sont pas chiffrées faute d’accès aux métriques du compte. Les alertes de dépendances restantes doivent être évaluées avant les prochaines mises à jour ; aucune mise à jour forcée avec rupture n’a été appliquée.

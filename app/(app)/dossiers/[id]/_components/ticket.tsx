@@ -70,7 +70,7 @@ export async function DossierTicket({
           {open && (
             <ActionButton
               action={setDossierStatus.bind(null, d.id, 'termine')}
-              confirm="Clôturer ce dossier ? Vérifiez au préalable la liste de contrôle (prestations, documents, paiements)."
+              confirm="Clôturer ce dossier ? Vérifiez au préalable la liste de contrôle (prestations, paiements)."
               variant="default"
               success="Dossier clôturé"
             >

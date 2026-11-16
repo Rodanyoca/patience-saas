@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState } from 'react'
 import {
@@ -11,7 +12,6 @@ import {
   Receipt,
   Truck,
   Landmark,
-  FileArchive,
   Settings,
   History,
   LogOut,
@@ -28,7 +28,6 @@ const NAV: { href: string; label: string; icon: typeof Users; roles?: Role[] }[]
   { href: '/dossiers', label: 'Dossiers', icon: FolderOpen },
   { href: '/prestations', label: 'Prestations', icon: Plane },
   { href: '/facturation', label: 'Facturation', icon: Receipt },
-  { href: '/documents', label: 'Documents', icon: FileArchive },
   { href: '/fournisseurs', label: 'Fournisseurs', icon: Truck, roles: ['admin', 'responsable'] },
   { href: '/finances', label: 'Finances', icon: Landmark, roles: ['admin', 'responsable'] },
   { href: '/journal', label: "Journal d'activité", icon: History, roles: ['admin', 'responsable'] },
@@ -71,7 +70,7 @@ export function AppSidebar({ agencyName, user }: Props) {
         )}
         aria-label="Navigation principale"
       >
-        <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-5">
+        <div className="flex h-20 items-center justify-between border-b border-sidebar-border px-5">
           <Brand agencyName={agencyName} />
           <button
             type="button"
@@ -91,15 +90,13 @@ export function AppSidebar({ agencyName, user }: Props) {
 
 function Brand({ agencyName }: { agencyName: string }) {
   return (
-    <Link href="/" className="flex min-w-0 items-center gap-2.5">
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-sidebar-primary font-mono text-sm font-semibold text-sidebar-primary-foreground">
-        {agencyName.slice(0, 1).toUpperCase()}
+    <Link href="/" aria-label={'LA PATIENCE — ' + agencyName + ' — Accueil'} className="flex min-w-0 items-center gap-3 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sidebar-ring">
+      <span className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-card">
+        <Image src="/brand/la-patience.webp" alt="LA PATIENCE" width={48} height={48} className="size-12 object-contain" />
       </span>
-      <span className="flex min-w-0 flex-col leading-tight">
-        <span className="truncate text-sm font-semibold">{agencyName}</span>
-        <span className="font-mono text-[10px] uppercase tracking-widest text-sidebar-foreground/60">
-          Gestion interne
-        </span>
+      <span className="flex min-w-0 flex-col gap-1 leading-tight">
+        <span className="text-sm font-semibold text-sidebar-accent-foreground">Espace de gestion</span>
+        <span className="text-[10px] uppercase tracking-[0.16em] text-sidebar-foreground/75">Gestion interne</span>
       </span>
     </Link>
   )
@@ -119,10 +116,10 @@ function Nav({ role, onNavigate }: { role: Role; onNavigate: () => void }) {
             onClick={onNavigate}
             aria-current={active ? 'page' : undefined}
             className={cn(
-              'flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors',
+              'flex items-center gap-3 rounded-md border-l-2 px-3 py-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sidebar-ring',
               active
-                ? 'bg-sidebar-accent font-medium text-sidebar-accent-foreground'
-                : 'text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground',
+                ? 'border-sidebar-primary bg-sidebar-accent font-medium text-sidebar-accent-foreground'
+                : 'border-transparent text-sidebar-foreground/85 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground',
             )}
           >
             <Icon className={cn('size-4', active && 'text-sidebar-primary')} />

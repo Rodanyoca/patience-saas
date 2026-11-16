@@ -1,3 +1,7 @@
+import {Pagination} from '@/components/pagination'
+import {pageNumber,PAGE_SIZE} from '@/lib/pagination'
+import { commercialScope } from '@/lib/commercial-scope'
+import { branchScope } from '@/lib/branches'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { and, desc, eq, ilike, or, sql, type SQL } from 'drizzle-orm'
@@ -14,10 +18,11 @@ export const metadata: Metadata = { title: 'Facturation' }
 export default async function BillingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; q?: string; status?: string }>
+  searchParams: Promise<{ page?:string; tab?: string; q?: string; status?: string }>
 }) {
-  await requirePageUser()
+  const actor=await requirePageUser()
   const sp = await searchParams
+  const page=pageNumber(sp.page)
   const tab = sp.tab === 'devis' || sp.tab === 'paiements' ? sp.tab : 'factures'
   const term = sp.q?.trim()
   const like = term ? `%${term}%` : null
@@ -26,9 +31,10 @@ export default async function BillingPage({
     .select({
       invoiced: sql<string>`coalesce(sum(${commercialDocs.total} * ${commercialDocs.rate}) filter (where ${commercialDocs.kind} = 'facture' and ${commercialDocs.status} <> 'annulee'), 0)`,
       openQuotes: sql<number>`count(*) filter (where ${commercialDocs.kind} = 'devis' and ${commercialDocs.status} in ('brouillon','envoye'))::int`,
-      collected: sql<string>`(select coalesce(sum(${payments.amount} * ${payments.rate}),0) from ${payments})`,
+      collected: sql<string>`(select coalesce(sum(pp.amount * pp.rate),0) from ${payments} pp join dossiers dd on dd.id=pp.dossier_id where ${branchScope(sql`dd.branch_id`,actor)})`,
     })
     .from(commercialDocs)
+    .where(commercialScope(actor))
   const receivable = Number(totals.invoiced) - Number(totals.collected)
 
   return (
@@ -64,13 +70,14 @@ export default async function BillingPage({
         {tab === 'paiements' && <FilterSelect name="status" defaultValue={sp.status} options={PAYMENT_METHODS} allLabel="Tous modes" />}
       </SearchForm>
 
-      {tab === 'paiements' ? <PaymentsTable like={like} method={sp.status} /> : <DocsTable kind={tab === 'devis' ? 'devis' : 'facture'} like={like} status={sp.status} />}
+      {tab === 'paiements' ? <PaymentsTable like={like} method={sp.status} page={page} params={sp}/> : <DocsTable kind={tab === 'devis' ? 'devis' : 'facture'} like={like} status={sp.status} page={page} params={sp}/>}
     </>
   )
 }
 
-async function DocsTable({ kind, like, status }: { kind: 'devis' | 'facture'; like: string | null; status?: string }) {
-  const filters: SQL[] = [eq(commercialDocs.kind, kind)]
+async function DocsTable({ kind, like, status, page, params }: { kind: 'devis' | 'facture'; like: string | null; status?: string;page:number;params:Record<string,string|undefined> }) {
+  const actor=await requirePageUser()
+  const filters: SQL[] = [eq(commercialDocs.kind, kind),commercialScope(actor)]
   if (status) filters.push(eq(commercialDocs.status, status))
   if (like) {
     filters.push(
@@ -81,7 +88,7 @@ async function DocsTable({ kind, like, status }: { kind: 'devis' | 'facture'; li
       )!,
     )
   }
-  const rows = await db
+  const pageRows = await db
     .select({
       d: commercialDocs,
       dossierRef: dossiers.reference,
@@ -94,10 +101,12 @@ async function DocsTable({ kind, like, status }: { kind: 'devis' | 'facture'; li
     .innerJoin(dossiers, eq(dossiers.id, commercialDocs.dossierId))
     .where(and(...filters))
     .orderBy(desc(commercialDocs.createdAt))
-    .limit(300)
+    .limit(PAGE_SIZE+1).offset((page-1)*PAGE_SIZE)
+  const rows=pageRows.slice(0,PAGE_SIZE)
 
   const labels = kind === 'devis' ? QUOTE_STATUS : INVOICE_STATUS
   return (
+    <>
     <Panel>
       {rows.length === 0 ? (
         <EmptyState title={kind === 'devis' ? 'Aucun devis' : 'Aucune facture'}>
@@ -158,11 +167,14 @@ async function DocsTable({ kind, like, status }: { kind: 'devis' | 'facture'; li
         </div>
       )}
     </Panel>
+    <Pagination path="/facturation" params={params} page={page} hasNext={pageRows.length>PAGE_SIZE}/>
+    </>
   )
 }
 
-async function PaymentsTable({ like, method }: { like: string | null; method?: string }) {
-  const filters: SQL[] = []
+async function PaymentsTable({ like, method, page, params }: { like: string | null; method?: string;page:number;params:Record<string,string|undefined> }) {
+  const actor=await requirePageUser()
+  const filters: SQL[] = [commercialScope(actor)]
   if (method) filters.push(eq(payments.method, method))
   if (like) {
     filters.push(
@@ -173,15 +185,17 @@ async function PaymentsTable({ like, method }: { like: string | null; method?: s
       )!,
     )
   }
-  const rows = await db
+  const pageRows = await db
     .select({ p: payments, invoiceNumber: commercialDocs.number, clientFirst: clients.firstName, clientLast: clients.lastName })
     .from(payments)
     .innerJoin(commercialDocs, eq(commercialDocs.id, payments.invoiceId))
     .innerJoin(clients, eq(clients.id, payments.clientId))
     .where(filters.length ? and(...filters) : undefined)
     .orderBy(desc(payments.paidAt), desc(payments.id))
-    .limit(300)
+    .limit(PAGE_SIZE+1).offset((page-1)*PAGE_SIZE)
+  const rows=pageRows.slice(0,PAGE_SIZE)
   return (
+    <>
     <Panel>
       {rows.length === 0 ? (
         <EmptyState title="Aucun encaissement" />
@@ -228,5 +242,7 @@ async function PaymentsTable({ like, method }: { like: string | null; method?: s
         </div>
       )}
     </Panel>
+    <Pagination path="/facturation" params={params} page={page} hasNext={pageRows.length>PAGE_SIZE}/>
+    </>
   )
 }

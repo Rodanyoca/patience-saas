@@ -1,61 +1,58 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { sql } from 'drizzle-orm'
+import { LockKeyhole } from 'lucide-react'
+import Image from 'next/image'
 import { db } from '@/lib/db'
 import { user } from '@/lib/db/schema'
 import { getCurrentUser } from '@/lib/session'
-import { getSettings } from '@/lib/server-utils'
 import { AuthForm } from '@/components/auth-form'
 
-export const metadata: Metadata = { title: 'Connexion' }
+export const metadata: Metadata = { title: { absolute: 'Connexion · LA PATIENCE' } }
 
 export default async function SignInPage() {
   if (await getCurrentUser()) redirect('/')
-  const [{ count }] = await db.select({ count: sql<number>`count(*)::int` }).from(user)
-  const settings = await getSettings()
-  const setup = count === 0
+  const existing = await db.select({id:user.id}).from(user).limit(1)
+  const setup = existing.length === 0
 
   return (
-    <main className="flex min-h-dvh flex-col lg:flex-row">
-      <section className="flex flex-col justify-between gap-10 bg-sidebar p-8 text-sidebar-foreground lg:w-[44%] lg:p-12">
-        <div className="flex items-center gap-2.5">
-          <span className="flex size-9 items-center justify-center rounded-md bg-sidebar-primary font-mono font-semibold text-sidebar-primary-foreground">
-            {(settings?.name ?? 'A').slice(0, 1).toUpperCase()}
-          </span>
-          <span className="font-semibold">{settings?.name ?? 'Agence de voyage'}</span>
-        </div>
-        <div className="flex flex-col gap-6">
-          <p className="font-mono text-xs uppercase tracking-[0.3em] text-sidebar-primary">Gestion interne</p>
-          <h1 className="max-w-md text-3xl font-semibold leading-tight text-balance text-sidebar-accent-foreground lg:text-4xl">
-            Chaque dossier, du premier appel à l&apos;embarquement.
-          </h1>
-          <div className="hidden max-w-sm flex-col rounded-lg border border-dashed border-sidebar-border lg:flex">
+    <main className="flex min-h-dvh flex-col bg-card text-foreground md:flex-row">
+      <section aria-label="Identité et métiers" className="relative flex flex-col justify-center overflow-hidden bg-primary px-6 py-7 text-white sm:px-10 md:min-h-dvh md:w-[48%] md:px-7 lg:w-[45%] lg:px-10 xl:px-14">
+        <div aria-hidden="true" className="pointer-events-none absolute -right-48 top-1/3 size-[520px] rounded-full border border-white/[0.06]" />
+        <div aria-hidden="true" className="pointer-events-none absolute -right-28 top-[42%] size-[360px] rounded-full border border-white/[0.06]" />
+        <div className="relative mx-auto w-full max-w-[480px]">
+          <div className="flex items-center gap-5">
+            <div className="shrink-0 overflow-hidden rounded-xl bg-card">
+              <Image src="/brand/la-patience.webp" alt="LA PATIENCE" width={88} height={88} priority className="size-[76px] object-contain lg:size-[88px]" />
+            </div>
+            <p className="text-[10px] font-medium uppercase leading-5 tracking-[0.2em] text-sidebar-foreground/80">Portail professionnel</p>
+          </div>
+          <div className="mb-5 mt-7 h-1 w-10 rounded-full bg-brand-gold" />
+          <h1 className="text-3xl font-semibold leading-[1.16] tracking-tight lg:text-4xl xl:text-[42px]">Un espace.<br /><span className="text-sidebar-primary">Plusieurs métiers.</span></h1>
+          <p className="mt-4 max-w-xs text-sm leading-6 text-sidebar-foreground/85">Votre environnement professionnel, sécurisé et centralisé.</p>
+          <div className="mt-6 grid grid-cols-2 gap-3 lg:gap-4">
             {[
-              ['Visa', 'Pièces, rendez-vous, décision'],
-              ['Billetterie', 'PNR, billets, émissions'],
-              ['Hôtels', 'Confirmations et séjours'],
-              ['Assurances', 'Polices et attestations'],
-            ].map(([k, v]) => (
-              <div key={k} className="flex items-center justify-between border-b border-dashed border-sidebar-border px-4 py-3 last:border-0">
-                <span className="font-mono text-xs uppercase tracking-wider text-sidebar-primary">{k}</span>
-                <span className="text-sm text-sidebar-foreground/80">{v}</span>
-              </div>
+              { name: 'Construction', detail: 'Projets • Chantiers • Gestion', logo: '/brand/construction.webp' },
+              { name: 'Travel', detail: 'Voyages • Réservations • Clients', logo: '/brand/travel.webp' },
+            ].map(({ name, detail, logo }) => (
+              <figure key={name} className="min-w-0">
+                <div className="flex aspect-square items-center justify-center overflow-hidden rounded-xl border border-white/15 bg-card p-2 shadow-lg shadow-black/10 lg:p-3">
+                  <Image src={logo} alt={name} width={240} height={240} className="h-full w-full object-contain" />
+                </div>
+                <figcaption className="mt-3 text-center text-[11px] leading-5 text-sidebar-foreground/85">{detail}</figcaption>
+              </figure>
             ))}
           </div>
         </div>
-        <p className="text-xs text-sidebar-foreground/50">Accès réservé au personnel autorisé.</p>
       </section>
-      <section className="flex flex-1 items-center justify-center p-6 lg:p-12">
-        <div className="flex w-full max-w-sm flex-col gap-6">
-          <div className="flex flex-col gap-1.5">
-            <h2 className="text-xl font-semibold">{setup ? 'Configuration initiale' : 'Connexion'}</h2>
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              {setup
-                ? 'Aucun compte n’existe encore. Créez le compte administrateur principal de l’agence.'
-                : 'Connectez-vous avec les identifiants fournis par votre administrateur.'}
-            </p>
+      <section aria-label="Authentification" className="flex flex-1 items-center justify-center px-7 py-9 sm:px-10 md:py-7">
+        <div className="w-full max-w-[380px]">
+          <div className="mb-6">
+            <h2 className="text-3xl font-semibold tracking-tight">{setup ? 'Configuration initiale' : 'Bienvenue'}</h2>
+            <p className="mt-3 text-sm leading-6 text-muted-foreground">{setup ? 'Créez le premier compte administrateur.' : 'Connectez-vous à votre espace de travail.'}</p>
           </div>
           <AuthForm mode={setup ? 'setup' : 'sign-in'} />
+          <p className="mt-6 flex items-center justify-center gap-2 border-t border-border pt-4 text-xs text-muted-foreground"><LockKeyhole aria-hidden="true" size={14} />Accès réservé au personnel autorisé</p>
         </div>
       </section>
     </main>

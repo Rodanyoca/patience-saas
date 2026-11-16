@@ -1,3 +1,7 @@
+import { Pagination } from '@/components/pagination'
+import { pageNumber, PAGE_SIZE } from '@/lib/pagination'
+import { prestationTypes } from '@/lib/db/schema'
+import { branchScope } from '@/lib/branches'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { and, desc, eq, ilike, or, sql, type SQL } from 'drizzle-orm'
@@ -15,12 +19,14 @@ export const metadata: Metadata = { title: 'Dossiers' }
 export default async function DossiersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string; type?: string; mine?: string; agent?: string }>
+  searchParams: Promise<{ page?:string; q?: string; status?: string; type?: string; mine?: string; agent?: string }>
 }) {
   const me = await requirePageUser()
   const sp = await searchParams
+  const page=pageNumber(sp.page)
   const term = sp.q?.trim()
-  const filters: SQL[] = []
+  const catalogue = await db.select({id:prestationTypes.id,name:prestationTypes.name}).from(prestationTypes).where(branchScope(prestationTypes.branchId,me)).orderBy(prestationTypes.name)
+  const filters: SQL[] = [branchScope(dossiers.branchId,me)]
   if (term) {
     const like = `%${term}%`
     filters.push(
@@ -35,11 +41,11 @@ export default async function DossiersPage({
   }
   if (sp.status && sp.status in DOSSIER_STATUS) filters.push(eq(dossiers.status, sp.status))
   if (sp.mine === '1') filters.push(eq(dossiers.agentId, me.id))
-  if (sp.type && sp.type in SERVICE_TYPES) {
-    filters.push(sql`exists (select 1 from ${services} where ${services.dossierId} = ${dossiers.id} and ${services.type} = ${sp.type})`)
+  if (sp.type) {
+    filters.push(sql`exists (select 1 from ${services} where ${services.dossierId} = ${dossiers.id} and (${services.prestationTypeId} = ${sp.type} or ${services.type} = ${sp.type}))`)
   }
 
-  const rows = await db
+  const pageRows = await db
     .select({
       id: dossiers.id,
       reference: dossiers.reference,
@@ -54,20 +60,23 @@ export default async function DossiersPage({
       clientFirst: clients.firstName,
       clientLast: clients.lastName,
       agentName: users.name,
-      types: sql<string[]>`coalesce((select array_agg(distinct ${services.type}) from ${services} where ${services.dossierId} = ${dossiers.id}), '{}')`,
+      types: sql<string[]>`coalesce((select array_agg(distinct coalesce((select p.name from prestation_types p where p.id=${services.prestationTypeId}),${services.type})) from ${services} where ${services.dossierId} = ${dossiers.id}), '{}')`,
     })
     .from(dossiers)
     .innerJoin(clients, eq(clients.id, dossiers.clientId))
     .leftJoin(users, eq(users.id, dossiers.agentId))
     .where(filters.length ? and(...filters) : undefined)
     .orderBy(sql`case ${dossiers.priority} when 'urgente' then 0 else 1 end`, desc(dossiers.updatedAt))
-    .limit(300)
+    .limit(PAGE_SIZE+1).offset((page-1)*PAGE_SIZE)
 
   const counts = await db
     .select({ status: dossiers.status, count: sql<number>`count(*)::int` })
     .from(dossiers)
+    .where(branchScope(dossiers.branchId,me))
     .groupBy(dossiers.status)
   const countOf = (s: string) => counts.find((c) => c.status === s)?.count ?? 0
+
+  const rows=pageRows.slice(0,PAGE_SIZE)
 
   return (
     <>
@@ -105,7 +114,7 @@ export default async function DossiersPage({
 
       <SearchForm placeholder="Référence, client, destination…" defaultValue={term}>
         {sp.status && <input type="hidden" name="status" value={sp.status} />}
-        <FilterSelect name="type" defaultValue={sp.type} options={SERVICE_TYPES} allLabel="Toutes prestations" />
+        <FilterSelect name="type" defaultValue={sp.type} options={Object.fromEntries(catalogue.map(p=>[p.id,p.name]))} allLabel="Toutes prestations" />
         <label className="flex h-9 items-center gap-2 rounded-md border bg-card px-3 text-sm">
           <input type="checkbox" name="mine" value="1" defaultChecked={sp.mine === '1'} className="accent-primary" />
           Mes dossiers
@@ -151,7 +160,7 @@ export default async function DossiersPage({
                         {d.types.length === 0 ? (
                           <span className="text-xs text-muted-foreground">—</span>
                         ) : (
-                          d.types.map((t) => <Pill key={t}>{SERVICE_TYPES[t as ServiceType]}</Pill>)
+                          d.types.map((t) => <Pill key={t}>{t}</Pill>)
                         )}
                       </div>
                     </td>
@@ -169,6 +178,7 @@ export default async function DossiersPage({
           </div>
         )}
       </Panel>
+      <Pagination path="/dossiers" params={sp} page={page} hasNext={pageRows.length>PAGE_SIZE}/>
     </>
   )
 }

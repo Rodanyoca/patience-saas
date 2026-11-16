@@ -1,4 +1,7 @@
 'use server'
+import {isoDate} from '@/lib/dates'
+import {moneyField} from '@/lib/money'
+
 
 import { eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
@@ -54,8 +57,8 @@ export async function updateSupplier(id: number, _: ActionResult | null, fd: For
 }
 
 async function money(fd: FormData) {
-  const amount = num(fd, 'amount')
-  if (!Number.isFinite(amount) || amount <= 0) throw new Error('Montant invalide.')
+  const amount = moneyField(fd, 'amount', true)
+  if (amount.lessThanOrEqualTo(0)) throw new Error('Montant invalide.')
   const method = str(fd, 'method') ?? 'especes'
   if (!(method in PAYMENT_METHODS)) throw new Error('Mode de paiement invalide.')
   const currency = str(fd, 'currency') ?? 'USD'
@@ -73,7 +76,7 @@ export async function recordSupplierPayment(supplierId: number, _: ActionResult 
         supplierId,
         serviceId: Number(str(fd, 'serviceId')) || null,
         reference: str(fd, 'reference'),
-        paidAt: str(fd, 'paidAt') ?? undefined,
+        paidAt: isoDate(str(fd, 'paidAt'), 'Date de paiement') ?? undefined,
         notes: str(fd, 'notes'),
         createdBy: user.id,
       })
@@ -145,7 +148,7 @@ export async function createCashMovement(_: ActionResult | null, fd: FormData): 
       amount: amount.toFixed(2),
       currency,
       rate: String(await getRate(currency)),
-      occurredAt: str(fd, 'occurredAt') ?? undefined,
+      occurredAt: isoDate(str(fd, 'occurredAt'), 'Date du mouvement') ?? undefined,
       notes: str(fd, 'notes'),
       createdBy: user.id,
     })

@@ -1,3 +1,5 @@
+import {randomUUID} from 'node:crypto'
+import { requireCommercialDoc } from '@/lib/commercial-access'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -24,7 +26,9 @@ import { INVOICE_STATUS, PAYMENT_METHODS, QUOTE_STATUS } from '@/lib/constants'
 import { formatDate, formatMoney, todayISO } from '@/lib/format'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const actor=await requirePageUser()
   const { id } = await params
+  await requireCommercialDoc(actor,Number(id))
   const [d] = await db.select({ number: commercialDocs.number }).from(commercialDocs).where(eq(commercialDocs.id, Number(id)))
   return { title: d?.number ?? 'Document' }
 }
@@ -33,6 +37,7 @@ export default async function DocPage({ params }: { params: Promise<{ id: string
   const user = await requirePageUser()
   const id = Number((await params).id)
   if (!id) notFound()
+  await requireCommercialDoc(user,id)
   const [row] = await db
     .select({ d: commercialDocs, c: clients, dossierRef: dossiers.reference, dossierTitle: dossiers.title })
     .from(commercialDocs)
@@ -131,6 +136,7 @@ export default async function DocPage({ params }: { params: Promise<{ id: string
                   <Field label="Montant" name="amount" type="number" required defaultValue={balance.toFixed(2)} />
                   <SelectField label="Devise" name="currency" options={currencies} defaultValue={d.currency} />
                   <SelectField label="Mode de paiement" name="method" options={PAYMENT_METHODS} defaultValue="especes" />
+                  <input type="hidden" name="requestKey" value={randomUUID()}/>
                   <Field label="Date" name="paidAt" type="date" defaultValue={todayISO()} required />
                   <Field label="Référence (n° transaction, chèque…)" name="reference" className="sm:col-span-2" />
                 </FormGrid>

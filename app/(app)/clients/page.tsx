@@ -1,3 +1,6 @@
+import {clientDossierCount} from '@/lib/client-query'
+import { Pagination } from '@/components/pagination'
+import { pageNumber, PAGE_SIZE } from '@/lib/pagination'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { desc, ilike, or, sql, eq } from 'drizzle-orm'
@@ -13,13 +16,15 @@ import { formatDate } from '@/lib/format'
 
 export const metadata: Metadata = { title: 'Clients' }
 
-export default async function ClientsPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
-  await requirePageUser()
-  const { q } = await searchParams
+export default async function ClientsPage({ searchParams }: { searchParams: Promise<{ page?:string; q?: string }> }) {
+  const actor=await requirePageUser()
+  const sp = await searchParams
+  const { q } = sp
+  const page=pageNumber(sp.page)
   const term = q?.trim()
   const like = term ? `%${term}%` : null
 
-  const rows = await db
+  const pageRows = await db
     .select({
       id: clients.id,
       reference: clients.reference,
@@ -31,7 +36,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
       email: clients.email,
       city: clients.city,
       createdAt: clients.createdAt,
-      dossierCount: sql<number>`(select count(*)::int from ${dossiers} where ${dossiers.clientId} = ${clients.id})`,
+      dossierCount: clientDossierCount(actor),
     })
     .from(clients)
     .where(
@@ -49,9 +54,11 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
         : undefined,
     )
     .orderBy(desc(clients.createdAt))
-    .limit(200)
+    .limit(PAGE_SIZE+1).offset((page-1)*PAGE_SIZE)
 
   const [{ total }] = await db.select({ total: sql<number>`count(*)::int` }).from(clients)
+
+  const rows=pageRows.slice(0,PAGE_SIZE)
 
   return (
     <>
@@ -61,7 +68,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
         actions={
           <FormDialog
             title="Nouveau client"
-            description="Le client est automatiquement enregistré comme voyageur titulaire."
+            description="Enregistrez les coordonnées du client."
             trigger={
               <>
                 <Plus /> Nouveau client
@@ -76,7 +83,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
           </FormDialog>
         }
       />
-      <SearchForm placeholder="Nom, téléphone, email, référence, passeport…" defaultValue={term} />
+      <SearchForm placeholder="Nom, téléphone, email, référence…" defaultValue={term} />
       <Panel>
         {rows.length === 0 ? (
           <EmptyState title={term ? 'Aucun client trouvé' : 'Aucun client pour le moment'}>
@@ -125,6 +132,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
           </div>
         )}
       </Panel>
+      <Pagination path="/clients" params={sp} page={page} hasNext={pageRows.length>PAGE_SIZE}/>
     </>
   )
 }

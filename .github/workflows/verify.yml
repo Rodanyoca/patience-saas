@@ -1,0 +1,33 @@
+name: Vérification
+on: [push, pull_request]
+jobs:
+ verify:
+  runs-on: ubuntu-latest
+  services:
+   postgres:
+    image: postgres:17
+    env:
+     POSTGRES_USER: patience_test
+     POSTGRES_PASSWORD: isolated-ci-only
+     POSTGRES_DB: patience_catalog_test_ci
+    ports: ['5432:5432']
+    options: >-
+     --health-cmd pg_isready
+     --health-interval 5s
+     --health-timeout 5s
+     --health-retries 10
+  env:
+   PATIENCE_TEST_DATABASE_URL: postgresql://patience_test:isolated-ci-only@127.0.0.1:5432/patience_catalog_test_ci
+   DATABASE_URL: postgresql://patience_test:isolated-ci-only@127.0.0.1:5432/patience_catalog_test_ci
+   BETTER_AUTH_URL: http://localhost:3101
+   BETTER_AUTH_SECRET: isolated-ci-only-secret-not-for-production-use
+  steps:
+   - uses: actions/checkout@v4
+   - uses: actions/setup-node@v4
+     with:
+      node-version: 22
+      cache: npm
+   - run: npm ci
+   - run: npm run test:catalogue
+   - run: npm run build
+   - run: npm run typecheck

@@ -1,19 +1,23 @@
 import 'server-only'
 import { eq, sql } from 'drizzle-orm'
-import { db } from '@/lib/db'
+import { cache } from 'react'
+import { db, type Database } from '@/lib/db'
 import { agencySettings, auditLogs, counters, currencies } from '@/lib/db/schema'
 import type { CurrentUser } from '@/lib/session'
 
 export type ActionResult = { ok: boolean; error?: string; id?: number | string }
 
-export async function getSettings() {
-  const [row] = await db.select().from(agencySettings).where(eq(agencySettings.id, 1))
+export async function readSettings(executor: Database = db) {
+  const [row] = await executor.select().from(agencySettings).where(eq(agencySettings.id, 1))
   return row
 }
 
-export async function getRate(code: string) {
-  const [row] = await db.select().from(currencies).where(eq(currencies.code, code))
-  return row ? Number(row.rate) : 1
+export const getSettings = cache(() => readSettings())
+
+export async function getRate(code: string, executor: Database = db) {
+  const [row] = await executor.select().from(currencies).where(eq(currencies.code, code))
+  if(!row || !row.active || Number(row.rate)<=0)throw new Error('Devise inconnue, inactive ou taux invalide.')
+  return Number(row.rate)
 }
 
 export async function listCurrencies() {
@@ -22,9 +26,9 @@ export async function listCurrencies() {
 
 type NumberKind = 'dossier' | 'quote' | 'invoice' | 'receipt' | 'client'
 
-/** Atomic, gap-free per-year counter producing references like FAC-2026-0007. */
-export async function nextNumber(kind: NumberKind) {
-  const settings = await getSettings()
+/** Atomic per-year counter producing references like FAC-2026-0007. */
+export async function nextNumber(kind: NumberKind, executor: Database = db) {
+  const settings = await readSettings(executor)
   const year = new Date().getFullYear()
   const prefix = {
     dossier: settings.dossierPrefix,
@@ -34,7 +38,7 @@ export async function nextNumber(kind: NumberKind) {
     client: settings.clientPrefix,
   }[kind]
   const key = kind === 'client' ? 'client' : `${kind}-${year}`
-  const [row] = await db
+  const [row] = await executor
     .insert(counters)
     .values({ key, value: 1 })
     .onConflictDoUpdate({ target: counters.key, set: { value: sql`${counters.value} + 1` } })
@@ -49,8 +53,9 @@ export async function logAudit(
   entity: string,
   entityId?: string | number | null,
   details?: string,
+  executor: Database = db,
 ) {
-  await db.insert(auditLogs).values({
+  await executor.insert(auditLogs).values({
     userId: user.id,
     userName: user.name,
     action,
@@ -75,7 +80,9 @@ export function num(fd: FormData, key: string) {
 }
 
 export function toErr(e: unknown): ActionResult {
-  const message = e instanceof Error ? e.message : 'Une erreur est survenue.'
+  const sqlError=e as {code?:string;cause?:{code?:string}}
+  const code=sqlError?.code??sqlError?.cause?.code
+  const message = code ? 'Opération indisponible ou données en conflit. Rechargez la page et réessayez.' : e instanceof Error ? e.message : 'Une erreur est survenue.'
   console.error('[action]', e)
   return { ok: false, error: message }
 }

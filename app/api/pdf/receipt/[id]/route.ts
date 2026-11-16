@@ -1,3 +1,4 @@
+import { requireDossier } from '@/lib/branches'
 import { and, eq, lte, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { clients, commercialDocs, payments, user as users } from '@/lib/db/schema'
@@ -20,12 +21,14 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     .leftJoin(users, eq(users.id, payments.createdBy))
     .where(eq(payments.id, id))
   if (!row) return new Response('Introuvable', { status: 404 })
-  const { p, c, inv } = row
+  try{await requireDossier(user,row.p.dossierId)}catch{return new Response('Accès refusé',{status:403})}
+  const { p, inv } = row
+  const c=inv.snapshot?.client??row.c
   const [{ paidUpTo }] = await db
     .select({ paidUpTo: sql<string>`coalesce(sum(${payments.appliedAmount}),0)` })
     .from(payments)
     .where(and(eq(payments.invoiceId, inv.id), lte(payments.id, p.id)))
-  const agency = await getSettings()
+  const agency = inv.snapshot?.agency??await getSettings()
   const buffer = await renderReceipt({
     agency,
     receiptNumber: p.receiptNumber,
